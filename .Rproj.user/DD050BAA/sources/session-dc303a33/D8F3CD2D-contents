@@ -1,0 +1,9 @@
+#' @title jbsMisc colour palettes
+#'
+#' @docType data
+#'
+#' @usage data(ces19)
+#'
+#' @format An object of class \code{lost}
+#'
+"jbspal"
