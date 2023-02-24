@@ -9,7 +9,7 @@ describe(x, digits = 4, convertFactors = FALSE, ...)
 \arguments{
 \item{x}{Vector on which to calculate summary statistics}
 
-\item{digits}{SCalar indicating how many decimal points to return}
+\item{digits}{Scalar indicating how many decimal points to return}
 
 \item{convertFactors}{Boolean indicating whether to convert factors to numeric}
 

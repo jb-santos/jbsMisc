@@ -30,19 +30,18 @@ ggfontsize <- function(basesize = 11,
                        angle.labs = FALSE) {
 
   ggfontsize <- ggplot2::theme(
-    plot.title = ggplot2::element_text(size = basesize*1.2),
-    plot.subtitle = ggplot2::element_text(size = basesize*1.1),
-    axis.title = ggplot2::element_text(size = basesize*1),
+    plot.title = ggplot2::element_text(size = basesize * 1.2),
+    plot.subtitle = ggplot2::element_text(size = basesize * 1.1),
+    axis.title = ggplot2::element_text(size = basesize * 1),
     axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 8)),
     axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 8, b = 0.1)),
-    axis.text = ggplot2::element_text(size = basesize*.9),
-    strip.text = ggplot2::element_text(size = basesize*1),
+    axis.text = ggplot2::element_text(size = basesize * .9),
+    strip.text = ggplot2::element_text(size = basesize * 1),
     legend.box.margin = ggplot2::margin(t = 0.1),
     legend.title = ggplot2::element_text(size = basesize, margin = ggplot2::margin(t = 0)),
     legend.margin = ggplot2::margin(t = 0),
-    legend.text = ggplot2::element_text(size = basesize*.9, margin = ggplot2::margin(t = 0)),
-    plot.caption = ggplot2::element_text(size = basesize*.8),
-    legend.position = "bottom",
+    legend.text = ggplot2::element_text(size = basesize * .9, margin = ggplot2::margin(t = 0)),
+    plot.caption = ggplot2::element_text(size = basesize * .8)
   )
 
   ggfontsize
@@ -61,7 +60,7 @@ ggfontsize <- function(basesize = 11,
 #' Detailed summary statistics
 #'
 #' @param x Vector on which to calculate summary statistics
-#' @param digits SCalar indicating how many decimal points to return
+#' @param digits Scalar indicating how many decimal points to return
 #' @param convertFactors Boolean indicating whether to convert factors to numeric
 #' @param ... Other arguments (not currently implemented)
 #'
