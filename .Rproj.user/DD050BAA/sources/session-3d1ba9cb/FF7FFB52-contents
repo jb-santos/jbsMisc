@@ -1,0 +1,178 @@
+
+
+setwd("C:/Users/John Santos/Box/Current Projects/22-619 CBC Road Ahead 2022/3 - Data analysis")
+source("C:/Users/John Santos/Box/Current Projects/22-619 CBC Road Ahead 2022/3 - Data analysis/cbctra2022_dataset_setup.R") 
+library(survey)
+tra_svy <- svydesign(~1, data = tra2022, weights = tra2022$weight, round = 4)
+library(jbsMisc)
+names(tra_svy$variables)
+table(tra2022$v_transition)
+table(tra_svy$variables$v_transition)
+class(tra_svy$variables$v_transition)
+
+survey::svytable(~v_transition+region, tra_svy)
+
+sjlabelled::get_labels(tra_svy$variables$v_transition)
+sjlabelled::get_labels(tra_svy$variables$v_transition)[1:4]
+levels(tra_svy$variables$v_transition)
+levels(as.factor(tra_svy$variables$v_transition))
+
+table(tra2022$v_transition, tra2022$region) %>% prop.table(2)
+table(tra2022$v_transition, tra2022$region, useNA = "ifany") %>% prop.table(2)
+
+cTab(tra_svy, yvar = "v_transition", xvar = "region")
+cTab(tra_svy, yvar = "v_transition", xvar = "v_losetouch")
+cTabs(tra_svy, yvar = "v_transition", xvars = c("region","gender","agegrp"))
+
+cTab(tra2022, yvar = "agegrp", xvar = "region")
+cTab(tra2022, yvar = "v_transition", xvar = "v_losetouch")
+cTabs(tra2022, yvar = "v_transition", xvars = c("region","gender","agegrp"))
+
+
+
+testfun <- function(design,
+                               yvar,
+                               xvar, ...) {
+  
+  xt <- survey::svytable(as.formula(paste0("~", yvar, "+", xvar)),
+                         design, round = TRUE) %>%
+    dplyr::as_tibble() %>%
+    dplyr::group_by(!!sym(xvar)) %>%
+    dplyr::mutate(pct =  round(n/sum(n), 4))
+  
+  tot <- survey::svytable(as.formula(paste0("~", yvar)),
+                          design, round = TRUE) %>%
+    dplyr::as_tibble() %>%
+    dplyr::mutate(pct =  round(n/sum(n), 4)) %>%
+    dplyr::mutate(!!sym(xvar) := "Total", .after = 1)
+  
+  out <- rbind(xt, tot)
+  
+  return(out)
+}
+testfun(tra_svy, yvar = "agegrp", xvar = "region")
+
+droplevels(as.factor(tra_svy$variables$v_transition))
+levels(droplevels(as.factor(tra_svy$variables$v_transition)))
+sjlabelled::get_labels(levels(droplevels(sjlabelled::to_factor(tra_svy$variables$v_transition))))
+droplevels(sjlabelled::get_labels(tra_svy$variables$v_transition))
+
+
+testdat <- tra_svy
+testdat$variables <- testdat$variables %>% dplyr::select(v_transition, v_losetouch)
+testdat$variables$v_transition <- as.numeric(testdat$variables$v_transition)
+testdat$variables$v_losetouch <- as.numeric(testdat$variables$v_losetouch)
+testfun(testdat, yvar = "v_transition", xvar = "v_losetouch")
+
+
+
+tra2022 %>%
+  dplyr::select(region, v_transition) %>%
+  na.omit() %>%
+  dplyr::as_tibble() %>%
+  dplyr::group_by(region, v_transition) %>%
+  dplyr::summarise(n = n()) %>%
+  dplyr::mutate(pct =  round(n/sum(n), 4))
+
+
+
+testfun2 <- function(design,
+                             yvar,
+                             xvars, ...) {
+  
+  ylabs <- levels(droplevels(as.factor(design[[yvar]])))
+  
+  xlabs <- lapply(1:length(xvars), function(i) {
+    levels(as.factor(design[[xvars[[i]]]]))
+  })
+  
+  myforms <- lapply(1:length(xvars), function(i) {
+    as.formula(paste0("~", yvar, "+", xvars[[i]]))
+  })
+  
+  totals <- design %>%
+    dplyr::as_tibble() %>%
+    dplyr::group_by(!!sym(yvar)) %>%
+    dplyr::summarise(n = n()) %>%
+    dplyr::mutate(pct =  round(n/sum(n), 4)) %>%
+    dplyr::mutate(Total := "Total", .after = 1)
+  totals[[yvar]] <- ylabs
+  totals[[yvar]] <- factor(totals[[yvar]], levels = ylabs)
+  
+  xt_list <- lapply(1:length(xvars), function(i) {
+    design %>%
+      select(c(!!sym(yvar), !!sym(xvars[[i]]))) %>%
+      na.omit() %>%
+      dplyr::as_tibble() %>%
+      dplyr::group_by(!!sym(xvars[[i]]), !!sym(yvar)) %>%
+      dplyr::summarise(n = n()) %>%
+      dplyr::mutate(pct =  round(n/sum(n), 4)) %>%
+      dplyr::mutate(!!sym(yvar) := ylabs) %>%
+      dplyr::mutate(!!sym(yvar) := factor(!!sym(yvar), levels = ylabs),
+                    !!sym(xvars[[i]]) := factor(!!sym(xvars[[i]]), levels = xlabs[[i]])) %>%
+      dplyr::relocate(!!sym(yvar), .before = 1)
+  })
+  names(xt_list) <- xvars
+  
+  # pivoting to create omnibus summary crosstab
+  omnixt <- lapply(1:length(xt_list), function(i) {
+    xt_list[[i]] <- xt_list[[i]] %>%
+      dplyr::select(-n) %>%
+      tidyr::pivot_wider(names_from = !!sym(xvars[[i]]), values_from = pct)
+  })
+  omnixt <- do.call("cbind", omnixt)
+  omnixt <- omnixt[!duplicated(as.list(omnixt))] %>% dplyr::as_tibble()
+  total_pct <- totals %>%
+    dplyr::select(-n) %>%
+    tidyr::pivot_wider(names_from = 2, values_from = pct)
+  omnixt <- omnixt %>%
+    dplyr::mutate(Total = total_pct$Total, .after = 1)
+  
+  out <- list(
+    "Summary Table" = omnixt,
+    "Total" = totals)
+  out <- append(out, xt_list)
+  
+  return(out)
+  
+}
+z <- testfun2(tra2022, yvar = "agegrp", xvars = c("region", "gender"))
+z
+
+
+
+
+table(tra2022$v_transition, tra2022$region) %>%
+  as.data.frame() %>%
+  dplyr::group_by(Var2) %>%
+  dplyr::mutate(pct =  round(Freq/sum(Freq), 4))
+
+
+
+
+
+testfun <- function(design,
+                               yvar,
+                               xvar, ...) {
+  
+  xt <- survey::svytable(as.formula(paste0("~", yvar, "+", xvar)),
+                         design, round = TRUE) %>%
+    dplyr::as_tibble() %>%
+    dplyr::group_by(!!sym(xvar)) %>%
+    dplyr::mutate(pct =  round(n/sum(n), 4))
+  
+  totals <- survey::svytable(as.formula(paste0("~", yvar)),
+                          design, round = TRUE) %>%
+    dplyr::as_tibble() %>%
+    dplyr::mutate(pct =  round(n/sum(n), 4)) %>%
+    dplyr::mutate(!!sym(xvar) := "Total", .after = 1)
+  ylabs <- levels(droplevels(as.factor(design$variables[[yvar]])))
+  totals[[yvar]] <- ylabs
+  totals[[yvar]] <- factor(totals[[yvar]], levels = ylabs)
+  
+  out <- rbind(xt, totals)
+  
+  return(out)
+}
+z <- testfun(tra_svy, yvar = "v_transition", xvar = "v_ogfuture")
+z

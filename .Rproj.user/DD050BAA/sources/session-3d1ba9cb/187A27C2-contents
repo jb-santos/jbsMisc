@@ -1,0 +1,39 @@
+
+
+
+
+
+
+
+
+
+setwd("C:/Users/John Santos/Box/Current Projects/22-619 CBC Road Ahead 2022/3 - Data analysis")
+source("C:/Users/John Santos/Box/Current Projects/22-619 CBC Road Ahead 2022/3 - Data analysis/cbctra2022_dataset_setup.R")
+library(survey)
+tra_svy <- svydesign(~1, data = tra2022, weights = tra2022$weight, round = 4)
+library(jbsMisc)
+names(tra_svy$variables)
+table(tra_svy$variables$v_transition)
+class(tra_svy$variables$v_transition)
+sjlabelled::get_labels(tra_svy$variables$v_transition)
+levels(tra_svy$variables$v_transition)
+levels(as.factor(tra_svy$variables$v_transition))
+
+table(tra2022$v_transition, tra2022$region) %>% prop.table(2)
+table(tra2022$v_transition, tra2022$region, useNA = "ifany") %>% prop.table(2)
+
+cTab(tra_svy, yvar = "region", xvar = "educ")
+cTab(tra_svy, yvar = "v_transition", xvar = "region")
+cTab(tra_svy, yvar = "v_transition", xvar = "v_ogfuture")
+
+cTabs(tra_svy, yvar = "v_transition", xvars = "region")
+cTabs(tra_svy, yvar = "v_transition", xvars = c("region","gender","agegrp"))
+cTabs(tra_svy, yvar = "v_transition", xvars = c("region","gender","v_ogfuture"))
+
+cTab(tra2022, yvar = "region", xvar = "educ")
+cTab(tra2022, yvar = "v_transition", xvar = "region")
+cTab(tra2022, yvar = "v_transition", xvar = "v_ogfuture")
+
+cTabs(tra2022, yvar = "v_transition", xvars = "region")
+cTabs(tra2022, yvar = "v_transition", xvars = c("region","gender","agegrp"))
+cTabs(tra2022, yvar = "v_transition", xvars = c("region","gender","v_ogfuture"))
