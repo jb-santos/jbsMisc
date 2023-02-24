@@ -4,15 +4,24 @@
 \alias{plot.ctabs}
 \title{plot method for ctabs objects}
 \usage{
-\method{plot}{ctabs}(x, dodge = FALSE, ...)
+\method{plot}{ctabs}(x, tblno = 1, dodge = FALSE, txt = FALSE, ...)
 }
 \arguments{
 \item{x}{Object of class "ctabs" created by \code{ctabs()}}
 
-\item{dodge}{Boolean indicating whether bars should be dodged (by default, they are stacked)}
+\item{tblno}{Integer indicating which table from the ctabs list should be printed}
+
+\item{dodge}{Boolean indicating whether bars should be dodged (default FALSE)}
+
+\item{txt}{Boolean indicating whether text labels for percentages should be dodged (default FALSE)}
 
 \item{...}{Other arguments (not currently implemented)}
 }
 \description{
-plot method for ctabs objects
+Plots outputs from \code{ctabs()} using \code{ggplot()}. By default, it
+plots the summary table. But, using the \code{tblno} option, you can print out any
+of the tables in a "ctabs" list object.
+
+Because this is a wrapper function for \code{ggplot()}, you can add additional
+plot options using the + command.
 }

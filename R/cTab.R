@@ -224,6 +224,25 @@ ctabs.survey.design <- function(design,
 
 
 
+# print.grouped_df <- function(x, tblno = NULL, digits = 0, ...) {
+#
+#   out <- x[[tblno]]
+#   xlevs <- unique(out[[1]])
+#   out <- out %>%
+#     dplyr::select(-n) %>%
+#     tidyr::pivot_wider(names_from = 2, values_from = pct) %>%
+#     select(-1)
+#   out <- round(out * 100, digits)
+#   out <- apply(out, c(1,2), function(x) paste0(x,"%")) %>%
+#     as_tibble() %>%
+#     mutate(!!sym(names(x[[tblno]][1])) := xlevs, .before = 1)
+#
+#   print(out)
+#
+# }
+
+
+
 
 #' ctabs.data.frame
 #'
@@ -341,8 +360,17 @@ print.ctabs <- function(x,
 
 #' plot method for ctabs objects
 #'
+#' @description Plots outputs from `ctabs()` using `ggplot()`. By default, it
+#' plots the summary table. But, using the `tblno` option, you can print out any
+#' of the tables in a "ctabs" list object.
+#'
+#' Because this is a wrapper function for `ggplot()`, you can add additional
+#' plot options using the + command.
+#'
 #' @param x Object of class "ctabs" created by `ctabs()`
-#' @param dodge Boolean indicating whether bars should be dodged (by default, they are stacked)
+#' @param tblno Integer indicating which table from the ctabs list should be printed
+#' @param dodge Boolean indicating whether bars should be dodged (default FALSE)
+#' @param txt Boolean indicating whether text labels for percentages should be dodged (default FALSE)
 #' @param ... Other arguments (not currently implemented)
 #'
 #' @importFrom ggplot2 ggplot aes geom_bar geom_text labs scale_y_continuous
@@ -351,43 +379,93 @@ print.ctabs <- function(x,
 #' @export
 #'
 plot.ctabs <- function(x,
+                       tblno = 1,
                        dodge = FALSE,
+                       txt = FALSE,
                        ...) {
 
-  plotdat <- x$`Summary Table`
-  plotdat <- plotdat %>%
-    pivot_longer(-1)
-  plotdat$name <- factor(plotdat$name,
-                         levels = unique(plotdat$name))
-  plotdat
+  if(tblno == 1) {
 
-  p <- ggplot2::ggplot(plotdat) +
-    aes(x = name,
-        y = value,
-        fill = .data[[attr(x, "yvar")]],
-        label = paste0(round(value*100), "%"))
+    plotdat <- x[[tblno]]
+    plotdat <- plotdat %>%
+      pivot_longer(-1)
+    plotdat$name <- factor(plotdat$name,
+                           levels = unique(plotdat$name))
+    plotdat
+
+    p <- ggplot2::ggplot(plotdat) +
+      aes(x = name,
+          y = value,
+          fill = .data[[attr(x, "yvar")]],
+          label = paste0(round(value*100), "%")) +
+      labs(title = paste("Summary crosstab for", attr(x, "yvar")),
+           x = "Sub-groups",
+           y = "%")
+
+  }
+
+  if(tblno == 2) {
+
+    plotdat <- x[[tblno]]
+    p <- ggplot2::ggplot(plotdat) +
+      aes(x = Total,
+          y = pct,
+          fill = .data[[attr(x, "yvar")]],
+          label = paste0(round(pct*100), "%")) +
+      labs(title = paste("Frequency distribution for", attr(x, "yvar")),
+           x = " ",
+           y = "%")
+
+  }
+
+  if(tblno > 2) {
+
+    plotdat <- x[[tblno]]
+    p <- ggplot2::ggplot(plotdat) +
+      aes(x = !!sym(names(plotdat[2])),
+          y = pct,
+          fill = .data[[attr(x, "yvar")]],
+          label = paste0(round(pct*100), "%")) +
+      labs(title = paste(attr(x, "yvar"), "by", names(plotdat[2])),
+           x = "Sub-groups",
+           y = "%")
+
+  }
 
   if(isTRUE(dodge)) {
     p <- p +
       geom_bar(stat = "identity", position = position_dodge(width = .9)) +
-      # geom_text(size = 3.5, position = position_dodge(width = .9), vjust = -.5) +
-      scale_y_continuous(labels = scales::percent) +
-      labs(title = paste("Summary crosstab for", attr(x, "yvar")),
-           x = "Sub-groups",
-           y = "%")
+      scale_y_continuous(labels = scales::percent)
+
+    if(isTRUE(txt)) {
+      p <- p +
+        geom_text(size = 3.5, position = position_dodge(width = .9), vjust = -.5)
+    }
+
   } else {
     p <- p +
       geom_bar(stat = "identity", position = position_stack()) +
-      geom_text(size = 3.5, position = position_stack(vjust = .5)) +
-      scale_y_continuous(labels = NULL, breaks = NULL) +
-      labs(title = paste("Summary crosstab for", attr(x, "yvar")),
-           x = "Sub-groups",
-           y = "%")
+      scale_y_continuous(labels = NULL, breaks = NULL)
+
+    if(isTRUE(txt)) {
+      p <- p +
+        geom_text(size = 3.5, position = position_stack(vjust = .5))
+    }
+
   }
 
   return(p)
 
 }
+
+
+
+
+
+
+
+
+
 
 
 likertnets <- function(obj, ...) {
