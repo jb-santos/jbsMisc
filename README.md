@@ -86,8 +86,7 @@ The output is a list object with the class `ctabs`.
 library(jbsMisc)
 table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
 names(table_vote1)
-#> [1] "Summary Table" "Total"         "region"        "female"       
-#> [5] "age"
+#> [1] "Summary" "Total"   "region"  "female"  "age"
 ```
 
 The first slot `$Summary` is the multiple crosstab table.
@@ -178,11 +177,16 @@ plot(table_vote1, dodge = FALSE, txt = TRUE) +
 
 ### Plotting other tables in `ctabs()` objects
 
+The second slot has the marginal frequencies.
+
 ``` r
 plot(table_vote1, 2, dodge = TRUE) + theme_bw()
 ```
 
 ![](man/figures/unnamed-chunk-14-1.png)<!-- -->
+
+Slots 3 onward each have a plot of the row variable against the
+respective column variable.
 
 ``` r
 plot(table_vote1, 5, dodge = TRUE) + theme_bw()
@@ -196,12 +200,13 @@ This function tests columns for significant differences. You can also
 obtain Holm-corrected p-values for multiple comparisons using the
 argument `adj.p = TRUE`.
 
-For now, it outputs test result summaries (i.e. significance stars) to a
-separate table. I’ll eventually update the output when I find some time
-in the future.
+For now, it outputs a list object where each slot is a data frame of the
+test result summaries (i.e. significance stars). If/when I find some
+time in the future, I’ll update the output to integrate the crosstab
+with the significance markings.
 
 ``` r
-table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
+table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "education"))
 table_vote1_tests <- testcols(table_vote1)
 ```
 
@@ -209,26 +214,23 @@ table_vote1_tests <- testcols(table_vote1)
 table_vote1_tests
 #> $region
 #>       Calgary - Edmonton Calgary - Other Edmonton - Other
-#> UCP   "*"                ""              "*"             
-#> NDP   "*"                ""              "*"             
-#> Other ""                 ""              ""              
+#> UCP                    *                                *
+#> NDP                    *                                *
+#> Other                                                    
 #> 
-#> $female
-#>       Male - Female
-#> UCP   ""           
-#> NDP   ""           
-#> Other ""           
-#> 
-#> $age
-#>       18-24 - 25-44 18-24 - 45-64 18-24 - 65+ 25-44 - 45-64 25-44 - 65+
-#> UCP   ""            ""            ""          ""            ""         
-#> NDP   ""            ""            ""          ""            ""         
-#> Other ""            ""            ""          ""            ""         
-#>       45-64 - 65+
-#> UCP   ""         
-#> NDP   ""         
-#> Other ""
+#> $education
+#>       HS/less - Some PSE HS/less - Bachelors HS/less - Graduate
+#> UCP                                        *                  *
+#> NDP                                        *                  *
+#> Other                                                          
+#>       Some PSE - Bachelors Some PSE - Graduate Bachelors - Graduate
+#> UCP                      *                   *                    *
+#> NDP                      *                   *                    *
+#> Other
 ```
+
+If you want to see a crosstab at the same time the significant
+differences table, you could do something like this:
 
 ``` r
 table_vote1[[3]] %>% 
@@ -242,45 +244,30 @@ table_vote1[[3]] %>%
 #> 3 Other    0.160    0.216 0.161
 table_vote1_tests[[1]]
 #>       Calgary - Edmonton Calgary - Other Edmonton - Other
-#> UCP   "*"                ""              "*"             
-#> NDP   "*"                ""              "*"             
-#> Other ""                 ""              ""
+#> UCP                    *                                *
+#> NDP                    *                                *
+#> Other
 ```
+
+Another example with education versus vote choice:
 
 ``` r
 table_vote1[[4]] %>% 
   select(-n) %>%
-  pivot_wider(names_from = female, values_from = pct)
-#> # A tibble: 3 × 3
-#>   dvote3  Male Female
-#>   <fct>  <dbl>  <dbl>
-#> 1 UCP    0.568  0.503
-#> 2 NDP    0.261  0.312
-#> 3 Other  0.171  0.186
-table_vote1_tests[[2]]
-#>       Male - Female
-#> UCP   ""           
-#> NDP   ""           
-#> Other ""
-```
-
-``` r
-table_vote1[[5]] %>% 
-  select(-n) %>%
-  pivot_wider(names_from = age, values_from = pct)
+  pivot_wider(names_from = education, values_from = pct)
 #> # A tibble: 3 × 5
-#>   dvote3 `18-24` `25-44` `45-64` `65+`
-#>   <fct>    <dbl>   <dbl>   <dbl> <dbl>
-#> 1 UCP      0.456   0.518   0.568 0.568
-#> 2 NDP      0.325   0.278   0.281 0.290
-#> 3 Other    0.219   0.205   0.150 0.142
-table_vote1_tests[[3]]
-#>       18-24 - 25-44 18-24 - 45-64 18-24 - 65+ 25-44 - 45-64 25-44 - 65+
-#> UCP   ""            ""            ""          ""            ""         
-#> NDP   ""            ""            ""          ""            ""         
-#> Other ""            ""            ""          ""            ""         
-#>       45-64 - 65+
-#> UCP   ""         
-#> NDP   ""         
-#> Other ""
+#>   dvote3 `HS/less` `Some PSE` Bachelors Graduate
+#>   <fct>      <dbl>      <dbl>     <dbl>    <dbl>
+#> 1 UCP        0.684      0.608     0.453    0.309
+#> 2 NDP        0.161      0.204     0.373    0.510
+#> 3 Other      0.155      0.188     0.173    0.181
+table_vote1_tests[[2]]
+#>       HS/less - Some PSE HS/less - Bachelors HS/less - Graduate
+#> UCP                                        *                  *
+#> NDP                                        *                  *
+#> Other                                                          
+#>       Some PSE - Bachelors Some PSE - Graduate Bachelors - Graduate
+#> UCP                      *                   *                    *
+#> NDP                      *                   *                    *
+#> Other
 ```

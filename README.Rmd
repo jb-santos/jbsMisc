@@ -147,10 +147,13 @@ plot(table_vote1, dodge = FALSE, txt = TRUE) +
 
 ### Plotting other tables in `ctabs()` objects
 
+The second slot has the marginal frequencies.
 
 ```{r}
 plot(table_vote1, 2, dodge = TRUE) + theme_bw()
 ```
+
+Slots 3 onward each have a plot of the row variable against the respective column variable.
 
 ```{r}
 plot(table_vote1, 5, dodge = TRUE) + theme_bw()
@@ -162,10 +165,10 @@ plot(table_vote1, 5, dodge = TRUE) + theme_bw()
 
 This function tests columns for significant differences. You can also obtain Holm-corrected p-values for multiple comparisons using the argument `adj.p = TRUE`.
 
-For now, it outputs test result summaries (i.e. significance stars) to a separate table. I'll eventually update the output when I find some time in the future.
+For now, it outputs a list object where each slot is a data frame of the test result summaries (i.e. significance stars). If/when I find some time in the future, I'll  update the output to integrate the crosstab with the significance markings.
 
 ```{r}
-table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
+table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "education"))
 table_vote1_tests <- testcols(table_vote1)
 ```
 
@@ -174,6 +177,8 @@ table_vote1_tests <- testcols(table_vote1)
 table_vote1_tests
 ```
 
+If you want to see a crosstab at the same time the significant differences table, you could do something like this:
+
 ```{r}
 table_vote1[[3]] %>% 
   select(-n) %>%
@@ -181,18 +186,11 @@ table_vote1[[3]] %>%
 table_vote1_tests[[1]]
 ```
 
+Another example with education versus vote choice:
 
 ```{r}
 table_vote1[[4]] %>% 
   select(-n) %>%
-  pivot_wider(names_from = female, values_from = pct)
+  pivot_wider(names_from = education, values_from = pct)
 table_vote1_tests[[2]]
 ```
-
-```{r}
-table_vote1[[5]] %>% 
-  select(-n) %>%
-  pivot_wider(names_from = age, values_from = pct)
-table_vote1_tests[[3]]
-```
-
