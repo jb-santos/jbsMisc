@@ -57,6 +57,35 @@ ggfontsize <- function(basesize = 11,
 
 
 
+
+#' Unweight survey design
+#'
+#' Sets sampling weights to zero. This "unweights" a survey design object, but
+#' keeps it as a survey design object. Written to help with develop the
+#' svyEffects package.
+#'
+#' @param obj A survey design object
+#' @param ... Other arguments (not currently implemented)
+#'
+#' @return A survey design object
+#'
+#' @export
+#'
+noWeights <- function(obj, ...) {
+  mysvy <- obj
+  l <- nrow(mysvy$variables)
+  mysvy$prob <- rep(1, l)
+  mysvy$allprob[[1]] <- rep(1, l)
+  mysvy$variables[[ncol(mysvy$variables)]] <- rep(1, l)
+
+  return(mysvy)
+}
+
+
+
+
+
+
 #' Detailed summary statistics
 #'
 #' @param x Vector on which to calculate summary statistics

@@ -18,3 +18,8 @@
 \description{
 ctab.data.frame
 }
+\examples{
+data("ab")
+ctab(ab, yvar = "dvote3", xvar = "region")
+
+}

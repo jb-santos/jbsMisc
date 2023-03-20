@@ -10,7 +10,6 @@
 #' @importFrom dplyr arrange as_tibble bind_cols bind_rows filter group_by mutate rename relocate select summarise tibble
 #' @importFrom magrittr %>%
 #' @importFrom rlang sym
-#' @importFrom sjlabelled get_label get_labels
 #' @importFrom stats as.formula
 #' @importFrom srvyr as_survey
 #' @importFrom survey svydesign svymean svyquantile svytable
@@ -18,6 +17,12 @@
 #' @importFrom utils combn relist
 #'
 #' @export
+#'
+#' @examples
+#' library(survey)
+#' data("ab")
+#' absvy <- svydesign(~1, data = ab, weights = ~weight)
+#' ctab(absvy, yvar = "dvote3", xvar = "region")
 #'
 ctab <- function(design,
                  yvar,
@@ -36,6 +41,12 @@ ctab <- function(design,
 #' @param ... Other arguments (not currently implemented)
 #'
 #' @export
+#'
+#' @examples
+#' library(survey)
+#' data("ab")
+#' absvy <- svydesign(~1, data = ab, weights = ~weight)
+#' ctab(absvy, yvar = "dvote3", xvar = "region")
 #'
 ctab.survey.design <- function(design,
                                yvar,
@@ -80,6 +91,10 @@ ctab.survey.design <- function(design,
 #' @param ... Other arguments (not currently implemented)
 #'
 #' @export
+#'
+#' @examples
+#' data("ab")
+#' ctab(ab, yvar = "dvote3", xvar = "region")
 #'
 ctab.data.frame <- function(design,
                             yvar,
@@ -140,6 +155,13 @@ ctab.data.frame <- function(design,
 #'
 #' @export
 #'
+#' @examples
+#' library(survey)
+#' data("ab")
+#' absvy <- svydesign(~1, data = ab, weights = ~weight)
+#' table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
+#' table_vote1
+#'
 ctabs <- function(design,
                   yvar,
                   xvars, ...) {UseMethod("ctabs")}
@@ -157,6 +179,13 @@ ctabs <- function(design,
 #' @param ... Other arguments (not currently implemented)
 #'
 #' @export
+#'
+#' @examples
+#' library(survey)
+#' data("ab")
+#' absvy <- svydesign(~1, data = ab, weights = ~weight)
+#' table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
+#' table_vote1
 #'
 ctabs.survey.design <- function(design,
                                 yvar,
@@ -207,7 +236,7 @@ ctabs.survey.design <- function(design,
 
   # Assemble output
   out <- list(
-    "Summary Table" = omnixt,
+    "Summary" = omnixt,
     "Total" = totals)
   out <- append(out, xt_list)
 
@@ -252,6 +281,11 @@ ctabs.survey.design <- function(design,
 #' @param ... Other arguments (not currently implemented)
 #'
 #' @export
+#'
+#' @examples
+#' data("ab")
+#' table_vote1 <- ctabs(ab, yvar = "dvote3", xvars = c("region", "female", "age"))
+#' table_vote1
 #'
 ctabs.data.frame <- function(design,
                              yvar,
@@ -307,7 +341,7 @@ ctabs.data.frame <- function(design,
 
   # Assemble output
   out <- list(
-    "Summary Table" = omnixt,
+    "Summary" = omnixt,
     "Total" = totals)
   out <- append(out, xt_list)
 
@@ -373,10 +407,25 @@ print.ctabs <- function(x,
 #' @param txt Boolean indicating whether text labels for percentages should be dodged (default FALSE)
 #' @param ... Other arguments (not currently implemented)
 #'
-#' @importFrom ggplot2 ggplot aes geom_bar geom_text labs scale_y_continuous
+#' @importFrom ggplot2 ggplot aes geom_bar geom_text labs scale_y_continuous position_stack position_dodge
 #' @importFrom scales percent
 #'
 #' @export
+#'
+#' @examples
+#' library(survey)
+#' data("ab")
+#' absvy <- svydesign(~1, data = ab, weights = ~weight)
+#' table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
+#' table_vote1
+#' library(ggplot2)
+#' plot(table_vote1, dodge = FALSE, txt = TRUE) +
+#' scale_fill_manual(values = c("#184484", "#f37221", "#bbbbbb")) +
+#'   labs(title = "Alberta vote intention",
+#'        y = "",
+#'        x = "Sub-group",
+#'        fill = "Party") +
+#'   theme_classic()
 #'
 plot.ctabs <- function(x,
                        tblno = 1,
@@ -545,6 +594,14 @@ likertnets <- function(obj, ...) {
 #'
 #' @export
 #'
+#' @examples
+#' library(survey)
+#' data("ab")
+#' absvy <- svydesign(~1, data = ab, weights = ~weight)
+#' table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
+#' table_vote1_tests <- testcols(table_vote1)
+#' table_vote1_tests
+#'
 testcols <- function(obj,
                      adj.p = FALSE,
                      ...)  {UseMethod("testcols")}
@@ -622,7 +679,7 @@ testcols.ctabs <- function(obj,
     sigdiffs <- do.call("cbind", pairlist_sig)
     rownames(sigdiffs) <- rownames(dat)
 
-    out[[x]] <- sigdiffs
+    out[[x]] <- as.data.frame(sigdiffs)
 
   }
 

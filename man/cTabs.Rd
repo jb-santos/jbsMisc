@@ -18,3 +18,11 @@ ctabs(design, yvar, xvars, ...)
 \description{
 ctabs
 }
+\examples{
+library(survey)
+data("ab")
+absvy <- svydesign(~1, data = ab, weights = ~weight)
+table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
+table_vote1
+
+}

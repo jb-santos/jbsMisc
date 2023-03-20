@@ -20,7 +20,8 @@ library(ggplot2)
 ```
 
 
-## To install
+## Installation
+
 
 Run the command:
 
@@ -34,4 +35,164 @@ You'll need the `{remotes}` package to do so, which can be installed by running:
 install.packages("remotes")
 ```
 
+
+## Simple crosstab using `ctab()`
+
+
+Create a survey design object. (These functions also work on vanilla data frames).
+
+```{r}
+library(tidyverse)
+library(survey)
+data("ab")
+absvy <- svydesign(~1, data = ab, weights = ~weight)
+```
+
+Generate the crosstab using `ctab()`.
+
+```{r}
+library(jbsMisc)
+table_vote <- ctab(absvy, yvar = "dvote3", xvar = "region")
+table_vote
+```
+
+The output is in long, or "tidy" format and lends itself well to plotting with `ggplot()`.
+
+```{r}
+library(ggplot2)
+ggplot(table_vote) +
+  aes(x = region, y = pct, fill = dvote3) +
+  geom_bar(stat = "identity")
+```
+
+
+```{r}
+library(ggplot2)
+ggplot(table_vote) +
+  aes(x = region, y = pct, fill = dvote3) +
+  geom_bar(stat = "identity", position = position_dodge())
+```
+
+
+## Multiple crosstabs (aka "stub-and-banner" tables) using `ctabs()`
+
+
+We can generate stub-and-banner crosstabs that cross-tabulate a single "dependent" (or row) variable against multiple "independent" (columns) variables using the `ctabs()` function. This is similar to the output in many polling reports (the generation of which is what led me to write these functions).
+
+Calculate the crosstabs. Multiple column variables can be specified by naming multiple variables within the argument `xvars = c()`.
+
+The output is a list object with the class `ctabs`. 
+
+```{r}
+library(jbsMisc)
+table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
+names(table_vote1)
+```
+
+The first slot `$Summary` is the multiple crosstab table. 
+
+```{r}
+table_vote1
+```
+
+The second slot `$Total` contains the marginal frequency distribution of the row variable. 
+
+```{r}
+table_vote1[[2]]
+```
+
+Subsequent tables contain a long- or tidy-format crosstab between the row variable and the respective column variable.
+
+```{r}
+table_vote1[[4]]
+```
+
+
+### Plotting multiple crosstabs
+
+
+There is a `plot()` method included for the objects outputted by `ctabs()`.
+
+```{r}
+plot(table_vote1)
+```
+
+The `plot()` function can take a few arguments to modify the default plots.
+
+`plot.ctabs(x, tblno = 1, dodge = FALSE, txt = FALSE)`
+
+- `tblno = ` selects which table in the `ctabs` list object to plot.
+- `dodge = ` whether bars should be "clustered" using `position_dodge()`. By default, they are stacked using `position_stack()`.
+- `txt = ` should text labels be added to graph.
+
+
+```{r}
+plot(table_vote1, dodge = TRUE, txt = TRUE)
+```
+
+`plot()` is a wrapper for `ggplot()`, so you can add additional options using `+ ...`.
+
+```{r}
+plot(table_vote1, dodge = FALSE, txt = TRUE) +
+  scale_fill_manual(values = c("#184484", "#f37221", "#bbbbbb")) +
+  labs(title = "Alberta vote intention",
+       subtitle = "Decided/leaning voters only, n=1,074",
+       y = "",
+       x = "Sub-group",
+       fill = "Party",
+       caption = "Janet Brown Opinion Research / Trend Research") +
+  theme_classic()
+```
+
+
+### Plotting other tables in `ctabs()` objects
+
+
+```{r}
+plot(table_vote1, 2, dodge = TRUE) + theme_bw()
+```
+
+```{r}
+plot(table_vote1, 5, dodge = TRUE) + theme_bw()
+```
+
+
+## Testing columns for significant differences using `testcols()`
+
+
+This function tests columns for significant differences. You can also obtain Holm-corrected p-values for multiple comparisons using the argument `adj.p = TRUE`.
+
+For now, it outputs test result summaries (i.e. significance stars) to a separate table. I'll eventually update the output when I find some time in the future.
+
+```{r}
+table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
+table_vote1_tests <- testcols(table_vote1)
+```
+
+
+```{r}
+table_vote1_tests
+```
+
+```{r}
+table_vote1[[3]] %>% 
+  select(-n) %>%
+  pivot_wider(names_from = region, values_from = pct)
+table_vote1_tests[[1]]
+```
+
+
+```{r}
+table_vote1[[4]] %>% 
+  select(-n) %>%
+  pivot_wider(names_from = female, values_from = pct)
+table_vote1_tests[[2]]
+```
+
+```{r}
+table_vote1[[5]] %>% 
+  select(-n) %>%
+  pivot_wider(names_from = age, values_from = pct)
+table_vote1_tests[[3]]
+```
 

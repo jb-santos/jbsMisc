@@ -18,3 +18,9 @@
 \description{
 ctabs.data.frame
 }
+\examples{
+data("ab")
+table_vote1 <- ctabs(ab, yvar = "dvote3", xvars = c("region", "female", "age"))
+table_vote1
+
+}

@@ -25,3 +25,19 @@ of the tables in a "ctabs" list object.
 Because this is a wrapper function for \code{ggplot()}, you can add additional
 plot options using the + command.
 }
+\examples{
+library(survey)
+data("ab")
+absvy <- svydesign(~1, data = ab, weights = ~weight)
+table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
+table_vote1
+library(ggplot2)
+plot(table_vote1, dodge = FALSE, txt = TRUE) +
+scale_fill_manual(values = c("#184484", "#f37221", "#bbbbbb")) +
+  labs(title = "Alberta vote intention",
+       y = "",
+       x = "Sub-group",
+       fill = "Party") +
+  theme_classic()
+
+}
