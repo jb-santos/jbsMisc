@@ -15,6 +15,9 @@ ctab(design, yvar, xvar, ...)
 
 \item{...}{Other arguments (not currently implemented)}
 }
+\value{
+A tibble
+}
 \description{
 ctab
 }
@@ -24,4 +27,7 @@ data("ab")
 absvy <- svydesign(~1, data = ab, weights = ~weight)
 ctab(absvy, yvar = "dvote3", xvar = "region")
 
+}
+\author{
+John Santos
 }

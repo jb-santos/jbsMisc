@@ -15,6 +15,16 @@ ctabs(design, yvar, xvars, ...)
 
 \item{...}{Other arguments (not currently implemented)}
 }
+\value{
+A list of class \code{ctabs} with dataframes:
+\describe{
+\item{\code{$Summary}}{The summary crosstab of every column variable
+against the row variable}
+\item{\code{$Total}}{The marginal frequencies and proportions of the row variable}
+\item{\code{$(name)}}{A grouped dataframe of the crosstab of the respective
+column variable against the row variable}
+}
+}
 \description{
 ctabs
 }
@@ -25,4 +35,7 @@ absvy <- svydesign(~1, data = ab, weights = ~weight)
 table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
 table_vote1
 
+}
+\author{
+John Santos
 }

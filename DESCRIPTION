@@ -12,6 +12,7 @@ RoxygenNote: 7.2.3
 Imports: 
     dplyr,
     ggplot2,
+    kableExtra,
     sjlabelled,
     magrittr,
     rlang,
@@ -19,7 +20,10 @@ Imports:
     scales,
     stats,
     srvyr,
+    stringr,
     survey,
+    tibble,
+    tidyselect,
     tidyr
 Depends: 
     R (>= 3.5.0)

@@ -7,14 +7,19 @@
 #' @param xvar String denoting name of column variable (in quotes)
 #' @param ... Other arguments (not currently implemented)
 #'
-#' @importFrom dplyr arrange as_tibble bind_cols bind_rows filter group_by mutate rename relocate select summarise tibble
+#' @importFrom dplyr arrange bind_cols bind_rows filter group_by mutate rename relocate select summarise tibble
 #' @importFrom magrittr %>%
 #' @importFrom rlang sym
 #' @importFrom stats as.formula
 #' @importFrom srvyr as_survey
 #' @importFrom survey svydesign svymean svyquantile svytable
+#' @importFrom tibble as_tibble
 #' @importFrom tidyr pivot_longer pivot_wider
 #' @importFrom utils combn relist
+#'
+#' @return A tibble
+#'
+#' @author John Santos
 #'
 #' @export
 #'
@@ -40,6 +45,10 @@ ctab <- function(design,
 #' @param xvar String denoting name of column variable (in quotes)
 #' @param ... Other arguments (not currently implemented)
 #'
+#' @return A tibble
+#'
+#' @author John Santos
+#'
 #' @export
 #'
 #' @examples
@@ -54,13 +63,13 @@ ctab.survey.design <- function(design,
 
   xt <- survey::svytable(as.formula(paste0("~", yvar, "+", xvar)),
                          design, round = TRUE) %>%
-    dplyr::as_tibble() %>%
+    tibble::as_tibble() %>%
     dplyr::group_by(!!sym(xvar)) %>%
     dplyr::mutate(pct =  round(n/sum(n), 4))
 
   totals <- survey::svytable(as.formula(paste0("~", yvar)),
                              design, round = TRUE) %>%
-    dplyr::as_tibble() %>%
+    tibble::as_tibble() %>%
     dplyr::mutate(pct =  round(n/sum(n), 4)) %>%
     dplyr::mutate(!!sym(xvar) := "Total", .after = 1)
 
@@ -90,6 +99,10 @@ ctab.survey.design <- function(design,
 #' @param xvar String denoting name of column variable (in quotes)
 #' @param ... Other arguments (not currently implemented)
 #'
+#' @return A tibble
+#'
+#' @author John Santos
+#'
 #' @export
 #'
 #' @examples
@@ -105,13 +118,13 @@ ctab.data.frame <- function(design,
 
   xt <- survey::svytable(as.formula(paste0("~", yvar, "+", xvar)),
                          design, round = TRUE) %>%
-    dplyr::as_tibble() %>%
+    tibble::as_tibble() %>%
     dplyr::group_by(!!sym(xvar)) %>%
     dplyr::mutate(pct =  round(n/sum(n), 4))
 
   totals <- survey::svytable(as.formula(paste0("~", yvar)),
                              design, round = TRUE) %>%
-    dplyr::as_tibble() %>%
+    tibble::as_tibble() %>%
     dplyr::mutate(pct =  round(n/sum(n), 4)) %>%
     dplyr::mutate(!!sym(xvar) := "Total", .after = 1)
 
@@ -142,7 +155,7 @@ ctab.data.frame <- function(design,
 #' @param xvars String (or vector of strings) denoting name of column variable (in quotes)
 #' @param ... Other arguments (not currently implemented)
 #'
-#' @importFrom dplyr arrange as_tibble bind_cols bind_rows filter group_by mutate rename relocate select summarise tibble
+#' @importFrom dplyr arrange bind_cols bind_rows filter group_by mutate rename relocate select summarise tibble
 #' @importFrom magrittr %>%
 #' @importFrom rlang sym
 #' @importFrom rstatix row_wise_prop_test
@@ -150,8 +163,20 @@ ctab.data.frame <- function(design,
 #' @importFrom stats as.formula
 #' @importFrom srvyr as_survey
 #' @importFrom survey svydesign svymean svyquantile svytable
+#' @importFrom tibble as_tibble
 #' @importFrom tidyr pivot_longer pivot_wider
 #' @importFrom utils combn relist
+#'
+#' @return A list of class \code{ctabs} with dataframes:
+#'   \describe{
+#'     \item{\code{$Summary}}{The summary crosstab of every column variable
+#'     against the row variable}
+#'     \item{\code{$Total}}{The marginal frequencies and proportions of the row variable}
+#'     \item{\code{$(name)}}{A grouped dataframe of the crosstab of the respective
+#'     column variable against the row variable}
+#'     }
+#'
+#' @author John Santos
 #'
 #' @export
 #'
@@ -178,6 +203,17 @@ ctabs <- function(design,
 #' @param xvars String (or vector of strings) denoting name of column variable (in quotes)
 #' @param ... Other arguments (not currently implemented)
 #'
+#' @return A list of class \code{ctabs} with dataframes:
+#'   \describe{
+#'     \item{\code{$Summary}}{The summary crosstab of every column variable
+#'     against the row variable}
+#'     \item{\code{$Total}}{The marginal frequencies and proportions of the row variable}
+#'     \item{\code{$(name)}}{A grouped dataframe of the crosstab of the respective
+#'     column variable against the row variable}
+#'     }
+#'
+#' @author John Santos
+#'
 #' @export
 #'
 #' @examples
@@ -203,7 +239,7 @@ ctabs.survey.design <- function(design,
   # Marginals table
   totals <- survey::svytable(as.formula(paste0("~", yvar)),
                              design, round = TRUE) %>%
-    dplyr::as_tibble() %>%
+    tibble::as_tibble() %>%
     dplyr::mutate(pct =  round(n/sum(n), 4)) %>%
     dplyr::mutate(Total := "Total", .after = 1) %>%
     dplyr::mutate(Total = factor(Total, levels = "Total"))
@@ -213,7 +249,7 @@ ctabs.survey.design <- function(design,
   # Crosstabs
   xt_list <- lapply(1:length(xvars), function(i) {
     survey::svytable(myforms[[i]], design, round = TRUE) %>%
-      dplyr::as_tibble() %>%
+      tibble::as_tibble() %>%
       dplyr::group_by(!!sym(xvars[[i]])) %>%
       dplyr::mutate(pct =  round(n/sum(n), 4),
                     !!sym(yvar) := ylabs,
@@ -231,7 +267,7 @@ ctabs.survey.design <- function(design,
   })
   omnixt <- do.call("cbind", omnixt)
   omnixt <- omnixt[!duplicated(as.list(omnixt))] %>%
-    as_tibble() %>%
+    tibble::as_tibble() %>%
     dplyr::mutate(Total = totals$pct, .after = 1)
 
   # Assemble output
@@ -263,7 +299,7 @@ ctabs.survey.design <- function(design,
 #     select(-1)
 #   out <- round(out * 100, digits)
 #   out <- apply(out, c(1,2), function(x) paste0(x,"%")) %>%
-#     as_tibble() %>%
+#     tibble::as_tibble() %>%
 #     mutate(!!sym(names(x[[tblno]][1])) := xlevs, .before = 1)
 #
 #   print(out)
@@ -279,6 +315,17 @@ ctabs.survey.design <- function(design,
 #' @param yvar String denoting name of row variable (in quotes)
 #' @param xvars String (or vector of strings) denoting name of column variable (in quotes)
 #' @param ... Other arguments (not currently implemented)
+#'
+#' @return A list of class \code{ctabs} with dataframes:
+#'   \describe{
+#'     \item{\code{$Summary}}{The summary crosstab of every column variable
+#'     against the row variable}
+#'     \item{\code{$Total}}{The marginal frequencies and proportions of the row variable}
+#'     \item{\code{$(name)}}{A grouped dataframe of the crosstab of the respective
+#'     column variable against the row variable}
+#'     }
+#'
+#' @author John Santos
 #'
 #' @export
 #'
@@ -308,7 +355,7 @@ ctabs.data.frame <- function(design,
   # Marginals table
   totals <- survey::svytable(as.formula(paste0("~", yvar)),
                              design, round = TRUE) %>%
-    dplyr::as_tibble() %>%
+    tibble::as_tibble() %>%
     dplyr::mutate(pct =  round(n/sum(n), 4)) %>%
     dplyr::mutate(Total := "Total", .after = 1) %>%
     dplyr::mutate(Total = factor(Total, levels = "Total"))
@@ -318,7 +365,7 @@ ctabs.data.frame <- function(design,
   # Crosstabs
   xt_list <- lapply(1:length(xvars), function(i) {
     survey::svytable(myforms[[i]], design, round = TRUE) %>%
-      dplyr::as_tibble() %>%
+      tibble::as_tibble() %>%
       dplyr::group_by(!!sym(xvars[[i]])) %>%
       dplyr::mutate(pct =  round(n/sum(n), 4),
                     !!sym(yvar) := ylabs,
@@ -336,7 +383,7 @@ ctabs.data.frame <- function(design,
   })
   omnixt <- do.call("cbind", omnixt)
   omnixt <- omnixt[!duplicated(as.list(omnixt))] %>%
-    as_tibble() %>%
+    tibble::as_tibble() %>%
     dplyr::mutate(Total = totals$pct, .after = 1)
 
   # Assemble output
@@ -366,9 +413,10 @@ ctabs.data.frame <- function(design,
 #' @param digits Scalar indicating how many decimal places to display (default 0)
 #' @param ... Other arguments (not currently implemented)
 #'
-#' @importFrom dplyr as_tibble select
+#' @importFrom dplyr select
 #' @importFrom magrittr %>%
 #' @importFrom rlang sym
+#' @importFrom tibble as_tibble
 #' @importFrom tidyr pivot_longer pivot_wider
 #'
 #' @export
@@ -384,7 +432,7 @@ print.ctabs <- function(x,
   out <- apply(out, c(1,2), function(x) paste0(x,"%")) %>% as.data.frame()
 
   if(isFALSE(is.null(attr(x, "label")))) attr(x, "label")
-  out <- as_tibble(out, rownames = attr(x, "yvar"))
+  out <- tibble::as_tibble(out, rownames = attr(x, "yvar"))
 
   print(out)
 
@@ -548,7 +596,7 @@ likertnets <- function(obj, ...) {
                          values_from = pct)
   })
   omnixt <- do.call("cbind", omnixt)
-  omnixt <- omnixt[!duplicated(as.list(omnixt))] %>% as_tibble()
+  omnixt <- omnixt[!duplicated(as.list(omnixt))] %>% tibble::as_tibble()
   total_pct <- xt_list[[1]] %>%
     dplyr::select(-n)  %>% tidyr::pivot_wider(names_from = 2, values_from = pct)
   omnixt <- omnixt %>%
@@ -574,14 +622,14 @@ likertnets <- function(obj, ...) {
 
 
 
-
 #' testcols
 #'
 #' @param obj An object of class "ctabs" created with the `ctabs()` function
 #' @param adj.p Boolean indicating whether to apply Holm correction to p-values (default TRUE)
+#' @param siglevel Numeric indicating significance level to use (default .05)
 #' @param ... Other arguments (not currently implemented)
 #'
-#' @importFrom dplyr arrange as_tibble bind_cols bind_rows filter group_by mutate rename relocate select summarise tibble
+#' @importFrom dplyr arrange bind_cols bind_rows filter group_by mutate rename relocate select summarise tibble
 #' @importFrom magrittr %>%
 #' @importFrom rlang sym
 #' @importFrom rstatix row_wise_prop_test
@@ -589,8 +637,16 @@ likertnets <- function(obj, ...) {
 #' @importFrom stats as.formula
 #' @importFrom srvyr as_survey
 #' @importFrom survey svydesign svymean svyquantile svytable
+#' @importFrom tibble as_tibble
 #' @importFrom tidyr pivot_longer pivot_wider
 #' @importFrom utils combn relist
+#'
+#' @return A list of class \code{ctabs.test} with one dataframe per crosstab of
+#' the respective column variable against the row variable. Each crosstab has
+#' frequencies, column proportions, and letters indicating significant differences
+#' of proportions between pairs of columns.
+#'
+#' @author John Santos
 #'
 #' @export
 #'
@@ -603,18 +659,552 @@ likertnets <- function(obj, ...) {
 #' table_vote1_tests
 #'
 testcols <- function(obj,
-                     adj.p = FALSE,
-                     ...)  {UseMethod("testcols")}
+                      adj.p = FALSE,
+                      siglevel = .05,
+                      ...)  {UseMethod("testcols")}
 
 
 
 #' testcols.ctabs
 #'
-#' @param obj An object created with the ctab or Ctabs functions
+#' @description This is (mainly) a wrapper around \code{rstatix::row_wise_prop_test}.
+#' It takes a \code{ctabs} list of crosstabs, tests for all pairwise differences
+#' and outputs a list of data frames that merge the frequencies/percentages with
+#' significantly different column proportions being marked with letters.
+#'
+#' @param obj An object of class "ctabs" created with the `ctabs()` function
 #' @param adj.p Boolean indicating whether to adjust for multiple comparisons
+#' @param siglevel Numeric indicating significance level to use (default .05)
 #' @param ... Other arguments (not currently implemented)
 #'
-#' @importFrom dplyr arrange as_tibble bind_cols bind_rows filter group_by mutate rename relocate select summarise tibble
+#' @importFrom dplyr arrange bind_cols bind_rows filter group_by mutate rename relocate select summarise tibble
+#' @importFrom magrittr %>%
+#' @importFrom rlang sym
+#' @importFrom rstatix row_wise_prop_test
+#' @importFrom sjlabelled get_label get_labels
+#' @importFrom stats as.formula
+#' @importFrom srvyr as_survey
+#' @importFrom stringr str_detect str_remove_all str_split_i
+#' @importFrom survey svydesign svymean svyquantile svytable
+#' @importFrom tibble rownames_to_column as_tibble
+#' @importFrom tidyr pivot_longer pivot_wider
+#' @importFrom utils combn relist
+#'
+#' @return A list of class \code{ctabs.test} with one dataframe per crosstab of
+#' the respective column variable against the row variable. Each crosstab has
+#' frequencies, column proportions, and letters indicating significant differences
+#' of proportions between pairs of columns.
+#'
+#' @author John Santos
+#'
+#' @export
+#'
+testcols.ctabs <- function(obj,
+                           adj.p = TRUE,
+                           siglevel = .05,
+                           ...) {
+
+  # Setup ----------------------------------------------------------------------
+
+  if(isTRUE(adj.p)) {
+    pval <- "p.adj"
+  } else {
+    pval <- "p"
+  }
+
+  xvars <- names(obj[3:length(obj)])
+  yvar <- names(obj[[1]][1])
+  ylevs <- levels(obj[[3]][[1]])
+
+  xt_list <- obj[3:length(obj)]
+  names(xt_list) <- xvars
+
+
+  # Build list of pairwise column tests ----------------------------------------
+
+  out <- NULL
+  testdfs <- NULL
+  finaltbls <- NULL
+
+  for(x in 1:length(xt_list)) {
+
+
+    # Create data frame for one bivariate crosstab
+
+    dat <- xt_list[[x]] %>%
+      dplyr::select(-pct) %>%
+      tidyr::pivot_wider(names_from = 2, values_from = n) %>%
+      as.data.frame()
+    rownames(dat) <- dat[[1]]
+    dat <- dat %>% dplyr::select(-1)
+
+
+    # Create list of pairwise comparisons
+
+    pairlist <- combn(names(dat), 2, function(i) {
+      d <- dat[i]
+      names(d) <- i
+      d
+    },
+    simplify = FALSE)
+
+    names(pairlist) <- sapply(1:length(pairlist), function(i) {
+      paste(colnames(pairlist[[i]][1]),"-",colnames(pairlist[[i]][2]))
+    })
+
+
+    # Test differences
+
+    pairlist_tests <- lapply(1:length(pairlist), function(i) {
+      rstatix::row_wise_prop_test(pairlist[[i]], correct = TRUE, detailed = TRUE)
+    })
+
+    pairlist_pvals <- lapply(1:length(pairlist), function(i) {
+      pairlist_tests[[i]][[pval]]
+    })
+
+    pairlist_sig <- NULL
+    for(i in 1:length(pairlist_pvals)) {
+      pairlist_sig[[i]] <- ifelse(pairlist_pvals[[i]] < siglevel, 1, 0)
+    }
+    names(pairlist_sig) <- names(pairlist)
+
+    # # Old output function
+    # sigdiffs <- do.call("cbind", pairlist_sig)
+    # rownames(sigdiffs) <- rownames(dat)
+    # out[[x]] <- as.data.frame(sigdiffs)
+
+
+    ## Assemble single output table --------------------------------------------
+
+    xlevs <- levels(xt_list[[x]][[2]])
+
+
+    # Create column letter scheme
+
+    combs <- combn(LETTERS[1:length(xlevs)], 2) %>%
+      as.data.frame()
+
+    pairnames <- sapply(1:ncol(combs), function(i) {
+      paste0((combs[[i]][1]),(combs[[i]][2]))
+    })
+    names(pairlist_sig) <- pairnames
+
+
+    # Identify significant differences and collapse to list
+
+    pairlist_sig <- lapply(1:length(pairlist_sig), function(k) {
+      sapply(1:length(pairlist_sig[[k]]), function(j) {
+        ifelse(pairlist_sig[[k]][[j]] == 1,
+               pairlist_sig[[k]][[j]] <- names(pairlist_sig)[[k]],
+               "")
+      })
+    })
+    names(pairlist_sig) <- names(pairlist)
+
+    sigdiffs <- do.call("cbind", pairlist_sig)
+    rownames(sigdiffs) <- rownames(dat)
+
+
+    # Create list of significant differences; will be used to populate summary table later
+
+    siglist <- lapply(1:nrow(dat), function(i) {
+      as.list(sigdiffs[i,])
+    })
+    names(siglist) <-  rownames(dat)
+
+
+    # Create blank summary table
+
+    diffs_summary <- dat
+    rownames(diffs_summary) <- rownames(dat)
+    colnames(diffs_summary) <- LETTERS[1:length(xlevs)]
+    diffs_summary <- apply(diffs_summary, c(1,2), function(x) x <- "")
+
+
+    # Loop to mark all pairs of significant differences
+
+    i <- 1
+    j <- 1
+    k <- 1
+    for(i in 1:nrow(diffs_summary)) {
+      while(j <= ncol(diffs_summary)) {
+        while(k <= length(siglist[[i]])) {
+          ifelse(str_detect(siglist[[i]][[k]], colnames(diffs_summary)[[j]]),
+                 diffs_summary[i,j] <- paste0(diffs_summary[i,j], siglist[[i]][[k]]),
+                 "")
+          k <- k + 1
+        }
+        k <- i
+        j <- j + 1
+      }
+      j <- 1
+      i <- i + 1
+    }
+    diffs_summary <- as.data.frame(diffs_summary)
+
+
+    # Above marks a column with its own letter; below removes that redundant letter
+
+    diffs_summary1 <- sapply(1:ncol(diffs_summary), function(j) {
+      stringr::str_remove_all(diffs_summary[[j]], colnames(diffs_summary)[[j]])
+    })
+    diffs_summary1 <- as.data.frame(diffs_summary1)
+
+
+    # Add rownames to facilitate merging with table of freqs/pcts
+    rownames(diffs_summary1) <- sapply(1:nrow(dat), function(i) {
+      paste0(rownames(dat)[[i]], "__sig")
+    })
+    colnames(diffs_summary1) <- xlevs
+
+
+    ## Simple output
+    #dat_pct <- as.matrix(dat) %>%
+    #  prop.table(margin = 2) %>%
+    #  round(., digits = 4)
+    #dat_pct <- apply(dat_pct, c(1,2), function(x) paste0(round(x*100),"%")) %>%
+    #  as.data.frame()
+    #
+    #finaltbl <- rbind(dat_pct, diffs_summary1)
+    #finaltbl <- finaltbl[order(row.names(finaltbl)), ]
+
+
+    # First create output table with n AND pct
+
+    temp <- xt_list[[x]] %>%
+      dplyr::mutate(pct = paste0(round(pct*100),"%"),
+                    n = as.character(n)) %>%
+      tidyr::pivot_longer(c(n,pct)) %>%
+      tidyr::pivot_wider(names_from = 2, values_from = value) %>%
+      dplyr::mutate(rwname = paste0(!!sym(yvar), "__", name)) %>%
+      dplyr::select(-c(1,2)) %>% as.data.frame()
+    rownames(temp) <- temp$rwname
+    temp <- temp %>% dplyr::select(-rwname)
+
+
+    # Merge n/pct table with significant differences table
+
+    finaltbl <- dplyr::bind_rows(temp, diffs_summary1) %>%
+      tibble::rownames_to_column("Response") %>%
+      dplyr::mutate(Stat = stringr::str_split_i(Response, "__", 2), .after = Response,
+             Response = stringr::str_split_i(Response, "__", 1))
+    finaltbl$Response <- factor(finaltbl$Response, levels = ylevs)
+    finaltbl <- finaltbl %>%
+      dplyr::arrange(Response)
+    finaltbl$Response <- as.character(finaltbl$Response)
+    finaltbl <- finaltbl %>%
+      dplyr::group_by(Response) %>%
+      dplyr::mutate(Response = replace(Response, duplicated(Response), " "))
+
+    out[[x]] <- finaltbl
+    attr(out[[x]], "xvar") <- xvars[[x]]
+    attr(out[[x]], "xlevs") <- xlevs
+    attr(out[[x]], "siglabs") <- colnames(diffs_summary)
+  }
+
+  # Assemble final output object -----------------------------------------------
+
+  attr(out, "ctabs.test")  <- TRUE
+  attr(out, "yvar") <- names(obj[[1]][1])
+  attr(out, "ylevs") <- levels(obj[[3]][[1]])
+  attr(out, "siglabs") <- sapply(1:length(out), function(x) attr(out[[x]], "siglabs"))
+  names(out) <- xvars
+  return(out)
+}
+
+
+
+
+#' Print method for ctabs.test objects
+#'
+#' @description Prints dataframes within ctabs.test list object and adds column
+#' letters marking significantly different column proportions.
+#'
+#' @param x An object of class "ctabs.test" produced by `ctabs()`
+#' @param ... Other arguments (not currently implemented)
+#'
+#' @export
+#'
+print.ctabs.test <- function(x,
+                             ...) {
+
+  x <- lapply(1:length(x), function(i) {
+    mycols <- c("", "", paste0("(",LETTERS[1:(ncol(x[[i]])-2)],")"))
+    names(mycols) <- colnames(x[[i]])
+    x[[i]] <- bind_rows(mycols, x[[i]])
+  })
+  for(i in 1:length(x)) print(as.data.frame(x[[i]]))
+}
+
+
+
+
+
+
+
+
+#' format_ctabs
+#'
+#' @param obj An object of class "ctabs.test" created with the \code{testcols} function.
+#' @param ... Other arguments (not currently implemented)
+#'
+#' @return A tibble
+#'
+#' @importFrom dplyr bind_cols select
+#' @importFrom magrittr %>%
+#' @importFrom tidyselect starts_with
+#'
+#' @return A tibble
+#'
+#' @author John Santos
+#'
+#' @export
+#'
+ctabs_format <- function(obj, ...) {
+
+  labelcols <- obj[[1]] %>% select(c(1,2))
+  siglabs <- sapply(1:length(obj), function(x) attr(obj[[x]], "siglabs"))
+  xvars <- sapply(1:length(obj), function(x) attr(obj[[x]], "xvar"))
+  xlevs <- sapply(1:length(obj), function(x) attr(obj[[x]], "xlevs"))
+
+
+  out <- dplyr::bind_cols(obj) %>%
+    dplyr::select(-c(tidyselect::starts_with("Response..."), tidyselect::starts_with("Stat...")))
+
+  out <- dplyr::bind_cols(labelcols, out)
+
+  temp <- c(unlist(siglabs))
+  temp <- c("", "", paste0("(",temp,")"))
+  names(temp) <- colnames(out)
+  out <- rbind(temp, out)
+
+  attr(out, "ctabs.fmt") <- TRUE
+  attr(out, "yvar") <- attr(obj, "yvar")
+  attr(out, "ylevs") <- attr(obj, "ylevs")
+  attr(out, "xvars") <- xvars
+  attr(out, "xlevs") <- xlevs
+  attr(out, "siglabs") <- siglabs
+
+  return(out)
+}
+
+
+
+
+
+#' Print objects outputted by \code{testcols} and \code{format_ctabs} using \code{kable}
+#'
+#' @param obj An list created with \code{testcols} or a data frame created with
+#' \code{format_ctabs}.
+#' @param xvarnames A vector of character strings that replaces the names of your
+#' column variables. (Default \code{NULL}; i.e. the function uses the variable
+#' names as they appear in \code{R}.) Useful if you want to specify nicely
+#' formatted variable names..
+#' @param ... Other arguments (not currently implemented).
+#'
+#' @return A formatted \code{kable} table
+#'
+#' @author John Santos
+#'
+#'
+#' @importFrom dplyr slice
+#' @importFrom kableExtra add_header_above column_spec kable_classic kbl row_spec
+#' @importFrom magrittr %>%
+#' @importFrom stats as.formula
+#' @importFrom tibble rownames_to_column
+#' @importFrom utils combn
+#'
+#' @export
+#'
+ctabs_kbl <- function(obj, xvarnames = NULL, ...) {UseMethod("kbl_ctabs")}
+
+
+
+#' Print objects outputted by \code{format_ctabs} using \code{kable}
+#'
+#' @param obj An list created with \code{testcols} or a data frame created with
+#' \code{format_ctabs}.
+#' @param xvarnames A vector of character strings that replaces the names of your
+#' column variables. (Default \code{NULL}; i.e. the function uses the variable
+#' names as they appear in \code{R}.) Useful if you want to specify nicely
+#' formatted variable names..
+#' @param ... Other arguments (not currently implemented).
+#'
+#' @return A formatted \code{kable} table
+#'
+#' @author John Santos
+#'
+#'
+#' @importFrom dplyr slice
+#' @importFrom kableExtra add_header_above column_spec kable_classic kbl row_spec
+#' @importFrom magrittr %>%
+#' @importFrom stats as.formula
+#' @importFrom tibble rownames_to_column
+#' @importFrom utils combn
+#'
+#' @export
+#'
+ctabs_kbl.data.frame <- function(obj, xvarnames = NULL, ...)  {
+
+  if(is.null(attr(obj, "ctabs.fmt"))) {
+    stop(print("This function only works with data frames created with format_ctabs(), or lists of data frames creates with testcols()."))}
+
+
+  # if lengths don't match, you're gonna have a bad time
+  if(!is.null(xvarnames) &
+     length(xvarnames) != length(attr(obj, "xvars"))) {
+    stop(print("xvarnames must have the same length the number of column variables in your ctabs"))}
+
+  # boring setup crap
+  siglabs <- unlist(attr(obj, "siglabs"))
+  siglabsb <- sapply(1:length(siglabs), function(x) paste0("(",siglabs[[x]],")"))
+  xlevs <- attr(obj, "xlevs")
+
+  ifelse(!is.null(xvarnames),
+         xvars <- xvarnames,
+         xvars <- attr(obj, "xvars")
+  )
+
+  # main function starts here
+  obj <- dplyr::slice(obj, -1)   # b/c input table for this function has column letters for sigdiffs
+  out <- kableExtra::kbl(obj,
+                         col.names = c("", "", siglabsb),
+                         align = c("l", "c", rep("r", ncol(obj)-2))) %>%
+    kableExtra::kable_classic() %>%
+    # kableExtra::row_spec(rep(3, length(attr(obj, "ylevs"))), extra_css = "border-bottom: 1px solid") %>%
+    kableExtra::column_spec(c(2,2+cumsum(lengths(xlevs))), border_right = TRUE) %>%
+    kableExtra::row_spec(0, align = "c") %>%
+    kableExtra::add_header_above(data.frame(names = c("", "", unlist(xlevs)),
+                                            colspan = rep(1, ncol(obj)))) %>%
+    kableExtra::add_header_above(data.frame(names = c("", xvars),
+                                            colspan = c(2, lengths(xlevs))))
+
+  # assemble output
+  # attr(out, "ctabs.kbl") <- TRUE
+  attr(out, "siglabs") <- attr(obj, "siglabs")
+  attr(out, "xvars") <- attr(obj, "xvars")
+  attr(out, "xlevs") <- xlevs
+  return(out)
+}
+
+
+
+#' Print objects outputted by \code{testcols} using \code{kable}
+#'
+#' @param obj An list created with \code{testcols} or a data frame created with
+#' \code{format_ctabs}.
+#' @param xvarnames A vector of character strings that replaces the names of your
+#' column variables. (Default \code{NULL}; i.e. the function uses the variable
+#' names as they appear in \code{R}.) Useful if you want to specify nicely
+#' formatted variable names..
+#' @param ... Other arguments (not currently implemented).
+#'
+#' @return A formatted \code{kable} table
+#'
+#' @author John Santos
+#'
+#'
+#' @importFrom dplyr slice
+#' @importFrom kableExtra add_header_above column_spec kable_classic kbl row_spec
+#' @importFrom magrittr %>%
+#' @importFrom stats as.formula
+#' @importFrom tibble rownames_to_column
+#' @importFrom utils combn
+#'
+#' @export
+#'
+ctabs_kbl.list <- function(obj, xvarnames = NULL, ...)  {
+
+  if(is.null(attr(obj, "ctabs.test"))) {
+    stop(print("This function only works with lists of data frames creates with testcols() or data frames created with format_ctabs()."))}
+
+
+  # First, recreate format_ctabs() function ------------------------------------
+
+  labelcols <- obj[[1]] %>% select(c(1,2))
+  siglabs <- sapply(1:length(obj), function(x) attr(obj[[x]], "siglabs"))
+  xvars <- sapply(1:length(obj), function(x) attr(obj[[x]], "xvar"))
+  xlevs <- sapply(1:length(obj), function(x) attr(obj[[x]], "xlevs"))
+
+
+  out <- dplyr::bind_cols(obj) %>%
+    dplyr::select(-c(tidyselect::starts_with("Response..."), tidyselect::starts_with("Stat...")))
+
+  out <- dplyr::bind_cols(labelcols, out)
+
+  temp <- c(" ", " ", unlist(siglabs))
+  names(temp) <- colnames(out)
+  out <- rbind(temp, out)
+
+
+  # Second, duplicate process from kbl_ctabs.data.frame() method ---------------
+
+  # if lengths don't match, you're gonna have a bad time
+  if(!is.null(xvarnames) &
+     length(xvarnames) != length(obj)) {
+    stop(print("xvarnames must have the same length the number of column variables in your ctabs"))}
+
+  # boring setup crap
+  siglabs <- unlist(attr(obj, "siglabs"))
+  siglabsb <- sapply(1:length(siglabs), function(x) paste0("(",siglabs[[x]],")"))
+
+  ifelse(!is.null(xvarnames),
+         xvars <- xvarnames,
+         xvars <- names(obj)
+  )
+
+  # main function starts here
+  out <- dplyr::slice(out, -1)   # b/c input table for this function has column letters for sigdiffs
+  out2 <- kableExtra::kbl(out,
+                         col.names = c("", "", siglabsb),
+                         align = c("l", "c", rep("r", ncol(out)-2))) %>%
+    kableExtra::kable_classic() %>%
+    # kableExtra::row_spec(rep(3, length(attr(obj, "ylevs"))), extra_css = "border-bottom: 1px solid") %>%
+    kableExtra::column_spec(c(2,2+cumsum(lengths(xlevs))), border_right = TRUE) %>%
+    kableExtra::row_spec(0, align = "c") %>%
+    kableExtra::add_header_above(data.frame(names = c("", "", unlist(xlevs)),
+                                            colspan = rep(1, ncol(out)))) %>%
+    kableExtra::add_header_above(data.frame(names = c("", xvars),
+                                            colspan = c(2, lengths(xlevs))))
+
+  # assemble output
+  # attr(out, "ctabs.kbl") <- TRUE
+  attr(out2, "yvar") <- attr(obj, "yvar")
+  attr(out2, "ylevs") <- attr(obj, "ylevs")
+  attr(out2, "xvars") <- xvars
+  attr(out2, "xlevs") <- xlevs
+  attr(out2, "siglabs") <- siglabs
+  return(out2)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#' testcols_
+#'
+#' @param obj An object of class "ctabs" created with the `ctabs()` function
+#' @param adj.p Boolean indicating whether to apply Holm correction to p-values (default TRUE)
+#' @param siglevel Numeric indicating significance level to use (default .05)
+#' @param ... Other arguments (not currently implemented)
+#'
+#' @importFrom dplyr arrange bind_cols bind_rows filter group_by mutate rename relocate select summarise tibble
 #' @importFrom magrittr %>%
 #' @importFrom rlang sym
 #' @importFrom rstatix row_wise_prop_test
@@ -622,14 +1212,52 @@ testcols <- function(obj,
 #' @importFrom stats as.formula
 #' @importFrom srvyr as_survey
 #' @importFrom survey svydesign svymean svyquantile svytable
+#' @importFrom tibble as_tibble
 #' @importFrom tidyr pivot_longer pivot_wider
 #' @importFrom utils combn relist
 #'
 #' @export
 #'
-testcols.ctabs <- function(obj,
-                           adj.p = TRUE,
-                           ...) {
+#' @examples
+#' library(survey)
+#' data("ab")
+#' absvy <- svydesign(~1, data = ab, weights = ~weight)
+#' table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
+#' table_vote1_tests <- testcols_(table_vote1)
+#' table_vote1_tests
+#'
+testcols_ <- function(obj,
+                     adj.p = FALSE,
+                     siglevel = .05,
+                     ...)  {UseMethod("testcols_")}
+
+
+
+#' testcols_.ctabs
+#'
+#' @param obj An object of class "ctabs" created with the `ctabs()` function
+#' @param adj.p Boolean indicating whether to adjust for multiple comparisons
+#' @param siglevel Numeric indicating significance level to use (default .05)
+#' @param ... Other arguments (not currently implemented)
+#'
+#' @importFrom dplyr arrange bind_cols bind_rows filter group_by mutate rename relocate select summarise tibble
+#' @importFrom magrittr %>%
+#' @importFrom rlang sym
+#' @importFrom rstatix row_wise_prop_test
+#' @importFrom sjlabelled get_label get_labels
+#' @importFrom stats as.formula
+#' @importFrom srvyr as_survey
+#' @importFrom survey svydesign svymean svyquantile svytable
+#' @importFrom tibble as_tibble
+#' @importFrom tidyr pivot_longer pivot_wider
+#' @importFrom utils combn relist
+#'
+#' @export
+#'
+testcols_.ctabs <- function(obj,
+                            adj.p = TRUE,
+                            siglevel = .05,
+                            ...) {
 
   if(isTRUE(adj.p)) {
     pval <- "p.adj"
@@ -644,6 +1272,7 @@ testcols.ctabs <- function(obj,
   names(xt_list) <- xvars
 
   out <- NULL
+  details <- NULL
   for(x in 1:length(xt_list)) {
 
     dat <- xt_list[[x]] %>%
@@ -673,16 +1302,40 @@ testcols.ctabs <- function(obj,
     # names(pairlist_pvals) <- names(pairlist)
     pairlist_sig <- NULL
     for(i in 1:length(pairlist_pvals)) {
-      pairlist_sig[[i]] <- ifelse(pairlist_pvals[[i]] < .05, "*", "")
+      pairlist_sig[[i]] <- ifelse(pairlist_pvals[[i]] < siglevel, "*", "")
     }
     names(pairlist_sig) <- names(pairlist)
     sigdiffs <- do.call("cbind", pairlist_sig)
     rownames(sigdiffs) <- rownames(dat)
 
     out[[x]] <- as.data.frame(sigdiffs)
-
+    details[[x]] <- pairlist_tests
   }
 
   names(out) <- xvars
-  return(out)
+  names(details) <- xvars
+
+  output <- list(
+    Summary = out,
+    Details = details
+  )
+  # attr(output, "class")  <- "ctabs.test_"
+  return(output)
+}
+
+
+
+
+#' Print method for ctabs.test_ objects
+#'
+#' @description Prints only the summary tables from a ctabs.test_ list object.
+#'
+#' @param x An object of class "ctabs.test" produced by `ctabs()`
+#' @param ... Other arguments (not currently implemented)
+#'
+#' @export
+#'
+print.ctabs.test_ <- function(x,
+                              ...) {
+  print(x[[1]])
 }

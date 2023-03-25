@@ -52,8 +52,8 @@ Generate the crosstab using `ctab()`.
 
 ```{r}
 library(jbsMisc)
-table_vote <- ctab(absvy, yvar = "dvote3", xvar = "region")
-table_vote
+votetbl <- ctab(absvy, yvar = "dvote3", xvar = "region")
+votetbl
 ```
 
 The output is in long, or "tidy" format and lends itself well to plotting with `ggplot()`.
@@ -85,26 +85,26 @@ The output is a list object with the class `ctabs`.
 
 ```{r}
 library(jbsMisc)
-table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
-names(table_vote1)
+votetbl <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
+names(votetbl)
 ```
 
 The first slot `$Summary` is the multiple crosstab table. 
 
 ```{r}
-table_vote1
+votetbl
 ```
 
 The second slot `$Total` contains the marginal frequency distribution of the row variable. 
 
 ```{r}
-table_vote1[[2]]
+votetbl[[2]]
 ```
 
 Subsequent tables contain a long- or tidy-format crosstab between the row variable and the respective column variable.
 
 ```{r}
-table_vote1[[4]]
+votetbl[[4]]
 ```
 
 
@@ -114,7 +114,7 @@ table_vote1[[4]]
 There is a `plot()` method included for the objects outputted by `ctabs()`.
 
 ```{r}
-plot(table_vote1)
+plot(votetbl)
 ```
 
 The `plot()` function can take a few arguments to modify the default plots.
@@ -127,13 +127,13 @@ The `plot()` function can take a few arguments to modify the default plots.
 
 
 ```{r}
-plot(table_vote1, dodge = TRUE, txt = TRUE)
+plot(votetbl, dodge = TRUE, txt = TRUE)
 ```
 
 `plot()` is a wrapper for `ggplot()`, so you can add additional options using `+ ...`.
 
 ```{r}
-plot(table_vote1, dodge = FALSE, txt = TRUE) +
+plot(votetbl, dodge = FALSE, txt = TRUE) +
   scale_fill_manual(values = c("#184484", "#f37221", "#bbbbbb")) +
   labs(title = "Alberta vote intention",
        subtitle = "Decided/leaning voters only, n=1,074",
@@ -150,13 +150,13 @@ plot(table_vote1, dodge = FALSE, txt = TRUE) +
 The second slot has the marginal frequencies.
 
 ```{r}
-plot(table_vote1, 2, dodge = TRUE) + theme_bw()
+plot(votetbl, 2, dodge = TRUE) + theme_bw()
 ```
 
 Slots 3 onward each have a plot of the row variable against the respective column variable.
 
 ```{r}
-plot(table_vote1, 5, dodge = TRUE) + theme_bw()
+plot(votetbl, 5, dodge = TRUE) + theme_bw()
 ```
 
 
@@ -165,32 +165,37 @@ plot(table_vote1, 5, dodge = TRUE) + theme_bw()
 
 This function tests columns for significant differences. You can also obtain Holm-corrected p-values for multiple comparisons using the argument `adj.p = TRUE`.
 
-For now, it outputs a list object where each slot is a data frame of the test result summaries (i.e. significance stars). If/when I find some time in the future, I'll  update the output to integrate the crosstab with the significance markings.
 
 ```{r}
-table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "education"))
-table_vote1_tests <- testcols(table_vote1)
+votetbl <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "educ"))
+votetbl_tests <- testcols(votetbl)
 ```
 
 
 ```{r}
-table_vote1_tests
+votetbl_tests
 ```
 
-If you want to see a crosstab at the same time the significant differences table, you could do something like this:
+
+
+## Nicely-formatted crosstabs
+
+The `ctabs_format()` function takes the output of `testcols` and consolidates all crosstabs (with significance testing) into a single crosstab. 
 
 ```{r}
-table_vote1[[3]] %>% 
-  select(-n) %>%
-  pivot_wider(names_from = region, values_from = pct)
-table_vote1_tests[[1]]
+votetbl_fmt <- ctabs_format(votetbl_tests)
+votetbl_fmt
 ```
 
-Another example with education versus vote choice:
+
+
+The `ctabs_kbl()` function is a wrapper function for `kable()` and prints publication-ready crosstabs in HTML and LaTeX formats.
+
+By using the argument `xvarnames = c()`, you can specify custom names for the independent variables.
 
 ```{r}
-table_vote1[[4]] %>% 
-  select(-n) %>%
-  pivot_wider(names_from = education, values_from = pct)
-table_vote1_tests[[2]]
+ctabs_kbl(votetbl_fmt, xvarnames = c("Region", "Education"))
 ```
+
+
+
