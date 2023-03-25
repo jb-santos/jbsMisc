@@ -1017,7 +1017,7 @@ ctabs_format <- function(obj, ...) {
 #'
 #' @export
 #'
-ctabs_kbl <- function(obj, xvarnames = NULL, ...) {UseMethod("kbl_ctabs")}
+ctabs_kbl <- function(obj, xvarnames = NULL, ...) {UseMethod("ctabs_kbl")}
 
 
 

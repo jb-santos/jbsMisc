@@ -28,8 +28,8 @@ Generate the crosstab using `ctab()`.
 
 ``` r
 library(jbsMisc)
-table_vote <- ctab(absvy, yvar = "dvote3", xvar = "region")
-table_vote
+votetbl <- ctab(absvy, yvar = "dvote3", xvar = "region")
+votetbl
 #> # A tibble: 12 × 4
 #> # Groups:   region [4]
 #>    dvote3 region       n   pct
@@ -53,7 +53,7 @@ plotting with `ggplot()`.
 
 ``` r
 library(ggplot2)
-ggplot(table_vote) +
+ggplot(votetbl) +
   aes(x = region, y = pct, fill = dvote3) +
   geom_bar(stat = "identity")
 ```
@@ -62,7 +62,7 @@ ggplot(table_vote) +
 
 ``` r
 library(ggplot2)
-ggplot(table_vote) +
+ggplot(votetbl) +
   aes(x = region, y = pct, fill = dvote3) +
   geom_bar(stat = "identity", position = position_dodge())
 ```
@@ -84,28 +84,29 @@ The output is a list object with the class `ctabs`.
 
 ``` r
 library(jbsMisc)
-table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
-names(table_vote1)
+votetbl <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "female", "age"))
+names(votetbl)
 #> [1] "Summary" "Total"   "region"  "female"  "age"
 ```
 
 The first slot `$Summary` is the multiple crosstab table.
 
 ``` r
-table_vote1
-#> # A tibble: 3 × 11
-#>   dvote3 Total Calgary Edmonton Other Male  Female `18-24` `25-44` `45-64` `65+`
-#>   <chr>  <chr> <chr>   <chr>    <chr> <chr> <chr>  <chr>   <chr>   <chr>   <chr>
-#> 1 UCP    54%   59%     40%      62%   57%   50%    46%     52%     57%     57%  
-#> 2 NDP    29%   25%     38%      22%   26%   31%    32%     28%     28%     29%  
-#> 3 Other  18%   16%     22%      16%   17%   19%    22%     20%     15%     14%
+votetbl
+#> # A tibble: 3 × 13
+#>   dvote3 Total Calgary Edmonton Other Male  Female `18-24` `25-34` `35-44`
+#>   <chr>  <chr> <chr>   <chr>    <chr> <chr> <chr>  <chr>   <chr>   <chr>  
+#> 1 UCP    54%   59%     40%      62%   57%   50%    46%     50%     54%    
+#> 2 NDP    29%   25%     38%      22%   26%   31%    32%     31%     24%    
+#> 3 Other  18%   16%     22%      16%   17%   19%    22%     19%     22%    
+#> # … with 3 more variables: `45-54` <chr>, `55-64` <chr>, `65+` <chr>
 ```
 
 The second slot `$Total` contains the marginal frequency distribution of
 the row variable.
 
 ``` r
-table_vote1[[2]]
+votetbl[[2]]
 #> # A tibble: 3 × 4
 #>   dvote3 Total     n   pct
 #>   <fct>  <fct> <dbl> <dbl>
@@ -118,7 +119,7 @@ Subsequent tables contain a long- or tidy-format crosstab between the
 row variable and the respective column variable.
 
 ``` r
-table_vote1[[4]]
+votetbl[[4]]
 #> # A tibble: 6 × 4
 #> # Groups:   female [2]
 #>   dvote3 female     n   pct
@@ -137,7 +138,7 @@ There is a `plot()` method included for the objects outputted by
 `ctabs()`.
 
 ``` r
-plot(table_vote1)
+plot(votetbl)
 ```
 
 ![](man/figures/unnamed-chunk-11-1.png)<!-- -->
@@ -153,7 +154,7 @@ plots.
 - `txt =` should text labels be added to graph.
 
 ``` r
-plot(table_vote1, dodge = TRUE, txt = TRUE)
+plot(votetbl, dodge = TRUE, txt = TRUE)
 ```
 
 ![](man/figures/unnamed-chunk-12-1.png)<!-- -->
@@ -162,7 +163,7 @@ plot(table_vote1, dodge = TRUE, txt = TRUE)
 using `+ ...`.
 
 ``` r
-plot(table_vote1, dodge = FALSE, txt = TRUE) +
+plot(votetbl, dodge = FALSE, txt = TRUE) +
   scale_fill_manual(values = c("#184484", "#f37221", "#bbbbbb")) +
   labs(title = "Alberta vote intention",
        subtitle = "Decided/leaning voters only, n=1,074",
@@ -180,7 +181,7 @@ plot(table_vote1, dodge = FALSE, txt = TRUE) +
 The second slot has the marginal frequencies.
 
 ``` r
-plot(table_vote1, 2, dodge = TRUE) + theme_bw()
+plot(votetbl, 2, dodge = TRUE) + theme_bw()
 ```
 
 ![](man/figures/unnamed-chunk-14-1.png)<!-- -->
@@ -189,7 +190,7 @@ Slots 3 onward each have a plot of the row variable against the
 respective column variable.
 
 ``` r
-plot(table_vote1, 5, dodge = TRUE) + theme_bw()
+plot(votetbl, 5, dodge = TRUE) + theme_bw()
 ```
 
 ![](man/figures/unnamed-chunk-15-1.png)<!-- -->
@@ -200,74 +201,85 @@ This function tests columns for significant differences. You can also
 obtain Holm-corrected p-values for multiple comparisons using the
 argument `adj.p = TRUE`.
 
-For now, it outputs a list object where each slot is a data frame of the
-test result summaries (i.e. significance stars). If/when I find some
-time in the future, I’ll update the output to integrate the crosstab
-with the significance markings.
-
 ``` r
-table_vote1 <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "education"))
-table_vote1_tests <- testcols(table_vote1)
+votetbl <- ctabs(absvy, yvar = "dvote3", xvars = c("region", "educ"))
+votetbl_tests <- testcols(votetbl)
 ```
 
 ``` r
-table_vote1_tests
+votetbl_tests
 #> $region
-#>       Calgary - Edmonton Calgary - Other Edmonton - Other
-#> UCP                    *                                *
-#> NDP                    *                                *
-#> Other                                                    
+#> # A tibble: 9 × 5
+#> # Groups:   Response [4]
+#>   Response Stat  Calgary Edmonton Other
+#>   <chr>    <chr> <chr>   <chr>    <chr>
+#> 1 "UCP"    n     "224"   "143"    "208"
+#> 2 " "      pct   "59%"   "40%"    "62%"
+#> 3 " "      sig   "B"     "AC"     "B"  
+#> 4 "NDP"    n     "97"    "136"    "74" 
+#> 5 " "      pct   "25%"   "38%"    "22%"
+#> 6 " "      sig   "B"     "C"      "B"  
+#> 7 "Other"  n     "61"    "77"     "54" 
+#> 8 " "      pct   "16%"   "22%"    "16%"
+#> 9 " "      sig   ""      ""       ""   
 #> 
-#> $education
-#>       HS/less - Some PSE HS/less - Bachelors HS/less - Graduate
-#> UCP                                        *                  *
-#> NDP                                        *                  *
-#> Other                                                          
-#>       Some PSE - Bachelors Some PSE - Graduate Bachelors - Graduate
-#> UCP                      *                   *                    *
-#> NDP                      *                   *                    *
-#> Other
+#> $educ
+#> # A tibble: 9 × 6
+#> # Groups:   Response [4]
+#>   Response Stat  NoPSE SomePSE Bachelors Graduate
+#>   <chr>    <chr> <chr> <chr>   <chr>     <chr>   
+#> 1 "UCP"    n     "115" "274"   "136"     "46"    
+#> 2 " "      pct   "68%" "61%"   "45%"     "31%"   
+#> 3 " "      sig   "CD"  "CD"    "ABD"     "ABC"   
+#> 4 "NDP"    n     "27"  "92"    "112"     "76"    
+#> 5 " "      pct   "16%" "20%"   "37%"     "51%"   
+#> 6 " "      sig   "CD"  "CD"    "ABD"     "ABC"   
+#> 7 "Other"  n     "26"  "85"    "52"      "27"    
+#> 8 " "      pct   "15%" "19%"   "17%"     "18%"   
+#> 9 " "      sig   ""    ""      ""        ""      
+#> 
+#> attr(,"ctabs.test")
+#> [1] TRUE
+#> attr(,"yvar")
+#> [1] "dvote3"
+#> attr(,"ylevs")
+#> [1] "UCP"   "NDP"   "Other"
+#> attr(,"siglabs")
+#> attr(,"siglabs")[[1]]
+#> [1] "A" "B" "C"
+#> 
+#> attr(,"siglabs")[[2]]
+#> [1] "A" "B" "C" "D"
 ```
 
-If you want to see a crosstab at the same time the significant
-differences table, you could do something like this:
+## Nicely-formatted crosstabs
+
+The `ctabs_format()` function takes the output of `testcols` and
+consolidates all crosstabs (with significance testing) into a single
+crosstab.
 
 ``` r
-table_vote1[[3]] %>% 
-  select(-n) %>%
-  pivot_wider(names_from = region, values_from = pct)
-#> # A tibble: 3 × 4
-#>   dvote3 Calgary Edmonton Other
-#>   <fct>    <dbl>    <dbl> <dbl>
-#> 1 UCP      0.586    0.402 0.619
-#> 2 NDP      0.254    0.382 0.220
-#> 3 Other    0.160    0.216 0.161
-table_vote1_tests[[1]]
-#>       Calgary - Edmonton Calgary - Other Edmonton - Other
-#> UCP                    *                                *
-#> NDP                    *                                *
-#> Other
+votetbl_fmt <- ctabs_format(votetbl_tests)
+votetbl_fmt
+#> # A tibble: 10 × 9
+#>    Response Stat  Calgary Edmonton Other NoPSE SomePSE Bachelors Graduate
+#>    <chr>    <chr> <chr>   <chr>    <chr> <chr> <chr>   <chr>     <chr>   
+#>  1 ""       ""    "(A)"   "(B)"    "(C)" "(A)" "(B)"   "(C)"     "(D)"   
+#>  2 "UCP"    "n"   "224"   "143"    "208" "115" "274"   "136"     "46"    
+#>  3 " "      "pct" "59%"   "40%"    "62%" "68%" "61%"   "45%"     "31%"   
+#>  4 " "      "sig" "B"     "AC"     "B"   "CD"  "CD"    "ABD"     "ABC"   
+#>  5 "NDP"    "n"   "97"    "136"    "74"  "27"  "92"    "112"     "76"    
+#>  6 " "      "pct" "25%"   "38%"    "22%" "16%" "20%"   "37%"     "51%"   
+#>  7 " "      "sig" "B"     "C"      "B"   "CD"  "CD"    "ABD"     "ABC"   
+#>  8 "Other"  "n"   "61"    "77"     "54"  "26"  "85"    "52"      "27"    
+#>  9 " "      "pct" "16%"   "22%"    "16%" "15%" "19%"   "17%"     "18%"   
+#> 10 " "      "sig" ""      ""       ""    ""    ""      ""        ""
 ```
 
-Another example with education versus vote choice:
+The `ctabs_kbl()` function is a wrapper function for `kable()` and
+prints publication-ready crosstabs in HTML and LaTeX formats.
 
-``` r
-table_vote1[[4]] %>% 
-  select(-n) %>%
-  pivot_wider(names_from = education, values_from = pct)
-#> # A tibble: 3 × 5
-#>   dvote3 `HS/less` `Some PSE` Bachelors Graduate
-#>   <fct>      <dbl>      <dbl>     <dbl>    <dbl>
-#> 1 UCP        0.684      0.608     0.453    0.309
-#> 2 NDP        0.161      0.204     0.373    0.510
-#> 3 Other      0.155      0.188     0.173    0.181
-table_vote1_tests[[2]]
-#>       HS/less - Some PSE HS/less - Bachelors HS/less - Graduate
-#> UCP                                        *                  *
-#> NDP                                        *                  *
-#> Other                                                          
-#>       Some PSE - Bachelors Some PSE - Graduate Bachelors - Graduate
-#> UCP                      *                   *                    *
-#> NDP                      *                   *                    *
-#> Other
-```
+By using the argument `xvarnames = c()`, you can specify custom names
+for the independent variables.
+
+    ctabs_kbl(votetbl_fmt, xvarnames = c("Region", "Education"))

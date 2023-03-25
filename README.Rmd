@@ -60,7 +60,7 @@ The output is in long, or "tidy" format and lends itself well to plotting with `
 
 ```{r}
 library(ggplot2)
-ggplot(table_vote) +
+ggplot(votetbl) +
   aes(x = region, y = pct, fill = dvote3) +
   geom_bar(stat = "identity")
 ```
@@ -68,7 +68,7 @@ ggplot(table_vote) +
 
 ```{r}
 library(ggplot2)
-ggplot(table_vote) +
+ggplot(votetbl) +
   aes(x = region, y = pct, fill = dvote3) +
   geom_bar(stat = "identity", position = position_dodge())
 ```
@@ -193,7 +193,7 @@ The `ctabs_kbl()` function is a wrapper function for `kable()` and prints public
 
 By using the argument `xvarnames = c()`, you can specify custom names for the independent variables.
 
-```{r}
+```
 ctabs_kbl(votetbl_fmt, xvarnames = c("Region", "Education"))
 ```
 
