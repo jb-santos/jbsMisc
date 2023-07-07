@@ -193,7 +193,7 @@ The `ctabs_kbl()` function is a wrapper function for `kable()` and prints public
 
 By using the argument `xvarnames = c()`, you can specify custom names for the independent variables.
 
-```
+```{r}
 ctabs_kbl(votetbl_fmt, xvarnames = c("Region", "Education"))
 ```
 

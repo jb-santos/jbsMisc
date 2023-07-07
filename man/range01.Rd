@@ -7,7 +7,7 @@
 range01(x)
 }
 \arguments{
-\item{x}{A numerical vector or column of a data frame/tibble to re-range from 0 to 1.}
+\item{x}{A numerical vector or column of a data frame/tibble to re-range from 0 to 1}
 }
 \description{
 range01

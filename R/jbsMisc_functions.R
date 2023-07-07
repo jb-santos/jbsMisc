@@ -3,10 +3,96 @@
 
 
 
+#' Calculate SE of proportion
+#'
+#' @param prop Proportion for which SE is to be calculated (in decimal format)
+#' @param n Sample size
+#' @param ... Other arguments (not currently implemented)
+#'
+#' @return A scalar denoting the SE
+#' @export
+#'
+seProp <- function(prop, n, ...) {
+  se <- sqrt( (prop * (1-prop)) / n)
+  return(se)
+}
+
+
+
+
+
+#' Title
+#'
+#' @param a.prop Proportion for Group A (in decimal format)
+#' @param a.n Size of Group A
+#' @param b.prop Proportion for Group B (in decimal format)
+#' @param b.n Size of Group B
+#' @param ... Other arguments (not currently implemented)
+#'
+#' @return A data frame
+#' @export
+#'
+testProps <- function(a.prop, a.n, b.prop, b.n, ...) {
+  diff <- a.prop - b.prop
+  diff.se <- sqrt( ((a.prop * (1-a.prop)) / a.n) +
+                     ((b.prop * (1-b.prop)) / b.n) )
+  diff.lwr95 <- diff - (1.96 * diff.se)
+  diff.upr95 <- diff + (1.96 * diff.se)
+
+  exp.prop <- ( (a.prop * a.n) + (b.prop * b.n) ) / (a.n + b.n)
+  z.val <- (diff - 0) /
+     sqrt( (exp.prop * (1-exp.prop)) * ((1/a.n) + (1/b.n)) )
+  p.val <- 2 * pnorm(z.val, lower.tail = FALSE)
+
+  # pstar <- (a.prop + b.prop) / (a.n + b.n)
+  # z.val <- (diff.se - 0) /
+  #   sqrt( (pstar * (1-pstar)) * ((1/a.n) + (1/b.n)) )
+  # p.val <- pnorm(z.val, lower.tail = FALSE)
+
+  out <- data.frame(
+      mean.diff = diff,
+      se.diff = diff.se,
+      lwr95 = diff.lwr95,
+      upr95 = diff.upr95,
+      exp.prop = exp.prop,
+      z.val = z.val,
+      p.val = p.val
+  )
+  return(out)
+}
+
+
+
+
+
+
+#' Margin of error of proportion
+#'
+#' @param prop Proportion for which margin of error is to be calculated  (in decimal format)
+#' @param n Sample size
+#' @param ... Other arguments (not currently implemented)
+#'
+#' @return A scalar denoting the SE
+#' @export
+#'
+moeProp <- function(prop, n, ci = .95, ...) {
+  se <- sqrt( (prop * (1-prop)) / n)
+  moe <- se * 1.96
+  out <- data.frame(
+    prop = prop,
+    n = n,
+    se = se,
+    moe = moe,
+    lwr = prop - moe,
+    upr = prop + moe
+  )
+  return(out)
+}
+
 
 #' range01
 #'
-#' @param x A numerical vector or column of a data frame/tibble to re-range from 0 to 1.
+#' @param x A numerical vector or column of a data frame/tibble to re-range from 0 to 1
 #'
 #' @export
 #'
@@ -60,7 +146,7 @@ ggfontsize <- function(basesize = 11,
 
 #' Unweight survey design
 #'
-#' Sets sampling weights to zero. This "unweights" a survey design object, but
+#' Sets sampling weights to 1. This "unweights" a survey design object, but
 #' keeps it as a survey design object. Written to help with develop the
 #' svyEffects package.
 #'
@@ -71,7 +157,7 @@ ggfontsize <- function(basesize = 11,
 #'
 #' @export
 #'
-noWeights <- function(obj, ...) {
+unWeight <- function(obj, ...) {
   mysvy <- obj
   l <- nrow(mysvy$variables)
   mysvy$prob <- rep(1, l)

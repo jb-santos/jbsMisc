@@ -79,6 +79,7 @@ ctab.survey.design <- function(design,
   out[[xvar]] <- factor(out[[xvar]],
                         levels = c(levels(droplevels(as.factor(design$variables[[xvar]]))),
                                    "Total"))
+  out <- out %>% filter(!is.na(!!sym(yvar)))
 
   if(isFALSE(is.null(attr(design$variables[[yvar]], "label")))) {
     attr(out, "label") <- sjlabelled::get_label(design$variables[[yvar]])
@@ -134,6 +135,7 @@ ctab.data.frame <- function(design,
   out[[xvar]] <- factor(out[[xvar]],
                         levels = c(levels(droplevels(as.factor(design$variables[[xvar]]))),
                                    "Total"))
+  out <- out %>% filter(!is.na(!!sym(yvar)))
 
   if(isFALSE(is.null(attr(design$variables[[yvar]], "label")))) {
     attr(out, "label") <- sjlabelled::get_label(design$variables[[yvar]])
@@ -228,7 +230,7 @@ ctabs.survey.design <- function(design,
                                 xvars, ...) {
 
   # Setup
-  ylabs <- levels(droplevels(as.factor(design$variables[[yvar]])))
+  ylabs <- levels(as.factor(design$variables[[yvar]]))
   xlabs <- lapply(1:length(xvars), function(i) {
     levels(as.factor(design$variables[[xvars[[i]]]]))
   })
@@ -275,10 +277,13 @@ ctabs.survey.design <- function(design,
     "Summary" = omnixt,
     "Total" = totals)
   out <- append(out, xt_list)
+  out[[1]] <- out[[1]] %>% filter(Total != 0)
+  for(i in 2:length(out)) {out[[i]] <- out[[i]] %>% filter(n != 0)}
 
   if(isFALSE(is.null(attr(design$variables[[yvar]], "label")))) {
     attr(out, "label") <- sjlabelled::get_label(design$variables[[yvar]])
   }
+
   attr(out, "class") <- "ctabs"
   attr(out, "yvar") <- yvar
   attr(out, "xvars") <- xvars
@@ -344,7 +349,7 @@ ctabs.data.frame <- function(design,
   design <- srvyr::as_survey(design)
 
   # Setup
-  ylabs <- levels(droplevels(as.factor(design$variables[[yvar]])))
+  ylabs <- levels(as.factor(design$variables[[yvar]]))
   xlabs <- lapply(1:length(xvars), function(i) {
     levels(as.factor(design$variables[[xvars[[i]]]]))
   })
@@ -391,10 +396,13 @@ ctabs.data.frame <- function(design,
     "Summary" = omnixt,
     "Total" = totals)
   out <- append(out, xt_list)
+  out[[1]] <- out[[1]] %>% filter(Total != 0)
+  for(i in 2:length(out)) {out[[i]] <- out[[i]] %>% filter(n != 0)}
 
   if(isFALSE(is.null(attr(design$variables[[yvar]], "label")))) {
     attr(out, "label") <- sjlabelled::get_label(design$variables[[yvar]])
   }
+
   attr(out, "class") <- "ctabs"
   attr(out, "yvar") <- yvar
   attr(out, "xvars") <- xvars
