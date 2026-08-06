@@ -35,7 +35,7 @@ library(ggplot2)
 plot(table_vote1, dodge = FALSE, txt = TRUE) +
 scale_fill_manual(values = c("#184484", "#f37221", "#bbbbbb")) +
   labs(title = "Alberta vote intention",
-       y = "",
+       y = " ",
        x = "Sub-group",
        fill = "Party") +
   theme_classic()

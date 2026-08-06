@@ -11,6 +11,8 @@ moeProp(prop, n, ci = 0.95, ...)
 
 \item{n}{Sample size}
 
+\item{ci}{Confidence level}
+
 \item{...}{Other arguments (not currently implemented)}
 }
 \value{

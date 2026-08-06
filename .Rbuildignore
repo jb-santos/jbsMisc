@@ -1,3 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\roughwork
+^functions to add to ctab$
+^functions to add to jbsMisc\.txt$
+^roughwork$
+^R/\.testcols_roughwork\.R$

@@ -62,13 +62,13 @@ ctab.survey.design <- function(design,
                                xvar, ...) {
 
   xt <- survey::svytable(as.formula(paste0("~", yvar, "+", xvar)),
-                         design, round = TRUE) %>%
+                         design, round = FALSE) %>%
     tibble::as_tibble() %>%
     dplyr::group_by(!!sym(xvar)) %>%
     dplyr::mutate(pct =  round(n/sum(n), 4))
 
   totals <- survey::svytable(as.formula(paste0("~", yvar)),
-                             design, round = TRUE) %>%
+                             design, round = FALSE) %>%
     tibble::as_tibble() %>%
     dplyr::mutate(pct =  round(n/sum(n), 4)) %>%
     dplyr::mutate(!!sym(xvar) := "Total", .after = 1)
@@ -118,13 +118,13 @@ ctab.data.frame <- function(design,
   design <- srvyr::as_survey(design)
 
   xt <- survey::svytable(as.formula(paste0("~", yvar, "+", xvar)),
-                         design, round = TRUE) %>%
+                         design, round = FALSE) %>%
     tibble::as_tibble() %>%
     dplyr::group_by(!!sym(xvar)) %>%
     dplyr::mutate(pct =  round(n/sum(n), 4))
 
   totals <- survey::svytable(as.formula(paste0("~", yvar)),
-                             design, round = TRUE) %>%
+                             design, round = FALSE) %>%
     tibble::as_tibble() %>%
     dplyr::mutate(pct =  round(n/sum(n), 4)) %>%
     dplyr::mutate(!!sym(xvar) := "Total", .after = 1)
@@ -240,7 +240,7 @@ ctabs.survey.design <- function(design,
 
   # Marginals table
   totals <- survey::svytable(as.formula(paste0("~", yvar)),
-                             design, round = TRUE) %>%
+                             design, round = FALSE) %>%
     tibble::as_tibble() %>%
     dplyr::mutate(pct =  round(n/sum(n), 4)) %>%
     dplyr::mutate(Total := "Total", .after = 1) %>%
@@ -250,7 +250,7 @@ ctabs.survey.design <- function(design,
 
   # Crosstabs
   xt_list <- lapply(1:length(xvars), function(i) {
-    survey::svytable(myforms[[i]], design, round = TRUE) %>%
+    survey::svytable(myforms[[i]], design, round = FALSE) %>%
       tibble::as_tibble() %>%
       dplyr::group_by(!!sym(xvars[[i]])) %>%
       dplyr::mutate(pct =  round(n/sum(n), 4),
@@ -359,7 +359,7 @@ ctabs.data.frame <- function(design,
 
   # Marginals table
   totals <- survey::svytable(as.formula(paste0("~", yvar)),
-                             design, round = TRUE) %>%
+                             design, round = FALSE) %>%
     tibble::as_tibble() %>%
     dplyr::mutate(pct =  round(n/sum(n), 4)) %>%
     dplyr::mutate(Total := "Total", .after = 1) %>%
@@ -369,7 +369,7 @@ ctabs.data.frame <- function(design,
 
   # Crosstabs
   xt_list <- lapply(1:length(xvars), function(i) {
-    survey::svytable(myforms[[i]], design, round = TRUE) %>%
+    survey::svytable(myforms[[i]], design, round = FALSE) %>%
       tibble::as_tibble() %>%
       dplyr::group_by(!!sym(xvars[[i]])) %>%
       dplyr::mutate(pct =  round(n/sum(n), 4),
@@ -478,7 +478,7 @@ print.ctabs <- function(x,
 #' plot(table_vote1, dodge = FALSE, txt = TRUE) +
 #' scale_fill_manual(values = c("#184484", "#f37221", "#bbbbbb")) +
 #'   labs(title = "Alberta vote intention",
-#'        y = "",
+#'        y = " ",
 #'        x = "Sub-group",
 #'        fill = "Party") +
 #'   theme_classic()
@@ -623,9 +623,12 @@ likertnets <- function(obj, ...) {
       dplyr::arrange(!!sym(names(out)[[i]]))
   }
 
-  class(out) <- "ctabs"
+  class(out) <- c("ctabs", "list")
   return(out)
 }
+
+
+
 
 
 
@@ -667,9 +670,13 @@ likertnets <- function(obj, ...) {
 #' table_vote1_tests
 #'
 testcols <- function(obj,
-                      adj.p = FALSE,
-                      siglevel = .05,
-                      ...)  {UseMethod("testcols")}
+                     adj.p = FALSE,
+                     siglevel = .05,
+                     ...)  {UseMethod("testcols")}
+
+
+
+
 
 
 
@@ -683,18 +690,19 @@ testcols <- function(obj,
 #' @param obj An object of class "ctabs" created with the `ctabs()` function
 #' @param adj.p Boolean indicating whether to adjust for multiple comparisons
 #' @param siglevel Numeric indicating significance level to use (default .05)
+#' @param digits = Numeric indicating precision of percentages (default 0)z
 #' @param ... Other arguments (not currently implemented)
 #'
-#' @importFrom dplyr arrange bind_cols bind_rows filter group_by mutate rename relocate select summarise tibble
+#' @importFrom dplyr arrange bind_cols bind_rows filter group_by mutate rename relocate select summarise ungroup
 #' @importFrom magrittr %>%
 #' @importFrom rlang sym
 #' @importFrom rstatix row_wise_prop_test
 #' @importFrom sjlabelled get_label get_labels
 #' @importFrom stats as.formula
 #' @importFrom srvyr as_survey
-#' @importFrom stringr str_detect str_remove_all str_split_i
+#' @importFrom stringr str_split_i
 #' @importFrom survey svydesign svymean svyquantile svytable
-#' @importFrom tibble rownames_to_column as_tibble
+#' @importFrom tibble tibble rownames_to_column as_tibble
 #' @importFrom tidyr pivot_longer pivot_wider
 #' @importFrom utils combn relist
 #'
@@ -707,10 +715,11 @@ testcols <- function(obj,
 #'
 #' @export
 #'
-testcols.ctabs <- function(obj,
-                           adj.p = TRUE,
-                           siglevel = .05,
-                           ...) {
+testcols<- function(obj,
+                    adj.p = FALSE,
+                    siglevel = .05,
+                    digits = 0,
+                    ...) {
 
   # Setup ----------------------------------------------------------------------
 
@@ -734,6 +743,34 @@ testcols.ctabs <- function(obj,
   testdfs <- NULL
   finaltbls <- NULL
 
+  # Create a single significance-label pool for the entire table. The sequence
+  # follows an Excel-style pattern: A-Z, then AA-AZ, BA-BZ, ... ZA-ZZ.
+  # This deliberately stops at ZZ, giving 702 available labels in total.
+  double_letter_labels <- as.vector(t(outer(LETTERS, LETTERS, paste0)))
+  sig_label_pool <- c(LETTERS, double_letter_labels)
+
+  # Count the labels required across all xvars before beginning any tests. This
+  # prevents a partially completed output if the A-ZZ limit would be exceeded.
+  xlev_counts <- vapply(xt_list, function(tbl) {
+    length(levels(tbl[[2]]))
+  }, integer(1))
+  total_labels_needed <- sum(xlev_counts)
+
+  if(total_labels_needed > length(sig_label_pool)) {
+    stop(
+      paste0(
+        "The requested table requires ", total_labels_needed,
+        " significance labels, but the supported maximum is ",
+        length(sig_label_pool), " (A through ZZ)."
+      ),
+      call. = FALSE
+    )
+  }
+
+  # Points to the first unused label in sig_label_pool. It is advanced after
+  # every xvar so that significance labels never restart at A.
+  next_label_index <- 2L   # start 2 to follow Trend's practice of reserving (A) for Total column
+
   for(x in 1:length(xt_list)) {
 
 
@@ -744,7 +781,8 @@ testcols.ctabs <- function(obj,
       tidyr::pivot_wider(names_from = 2, values_from = n) %>%
       as.data.frame()
     rownames(dat) <- dat[[1]]
-    dat <- dat %>% dplyr::select(-1)
+    #dat <- dat %>% dplyr::select(-1)    # not replacing NAs with 0s caused failure when a variable has NAs
+    dat <- dat %>% dplyr::select(-1) %>% replace(is.na(.), 0)
 
 
     # Create list of pairwise comparisons
@@ -788,76 +826,89 @@ testcols.ctabs <- function(obj,
     xlevs <- levels(xt_list[[x]][[2]])
 
 
-    # Create column letter scheme
+    # Allocate a unique, consecutive set of labels to the current xvar.
+    # For example, if an earlier xvar used A-C, this xvar begins at D.
 
-    combs <- combn(LETTERS[1:length(xlevs)], 2) %>%
-      as.data.frame()
-
-    pairnames <- sapply(1:ncol(combs), function(i) {
-      paste0((combs[[i]][1]),(combs[[i]][2]))
-    })
-    names(pairlist_sig) <- pairnames
+    n_xlevs <- length(xlevs)
+    current_label_indices <- next_label_index:(next_label_index + n_xlevs - 1L)
+    current_labels <- sig_label_pool[current_label_indices]
+    next_label_index <- next_label_index + n_xlevs
 
 
-    # Identify significant differences and collapse to list
+    # Attach the exact two labels belonging to every pairwise test. Keeping the
+    # pair members separate avoids ambiguous strings once labels such as AA and
+    # AB are introduced (for example, A + AB versus AA + B).
 
-    pairlist_sig <- lapply(1:length(pairlist_sig), function(k) {
-      sapply(1:length(pairlist_sig[[k]]), function(j) {
-        ifelse(pairlist_sig[[k]][[j]] == 1,
-               pairlist_sig[[k]][[j]] <- names(pairlist_sig)[[k]],
-               "")
-      })
-    })
-    names(pairlist_sig) <- names(pairlist)
+    label_pairs <- combn(current_labels, 2)
 
-    sigdiffs <- do.call("cbind", pairlist_sig)
-    rownames(sigdiffs) <- rownames(dat)
-
-
-    # Create list of significant differences; will be used to populate summary table later
-
-    siglist <- lapply(1:nrow(dat), function(i) {
-      as.list(sigdiffs[i,])
-    })
-    names(siglist) <-  rownames(dat)
-
-
-    # Create blank summary table
-
-    diffs_summary <- dat
-    rownames(diffs_summary) <- rownames(dat)
-    colnames(diffs_summary) <- LETTERS[1:length(xlevs)]
-    diffs_summary <- apply(diffs_summary, c(1,2), function(x) x <- "")
-
-
-    # Loop to mark all pairs of significant differences
-
-    i <- 1
-    j <- 1
-    k <- 1
-    for(i in 1:nrow(diffs_summary)) {
-      while(j <= ncol(diffs_summary)) {
-        while(k <= length(siglist[[i]])) {
-          ifelse(str_detect(siglist[[i]][[k]], colnames(diffs_summary)[[j]]),
-                 diffs_summary[i,j] <- paste0(diffs_summary[i,j], siglist[[i]][[k]]),
-                 "")
-          k <- k + 1
-        }
-        k <- i
-        j <- j + 1
-      }
-      j <- 1
-      i <- i + 1
+    if(ncol(label_pairs) != length(pairlist_sig)) {
+      stop(
+        paste0(
+          "The number of significance-label pairs does not match the number ",
+          "of column tests for xvar '", xvars[[x]], "'."
+        ),
+        call. = FALSE
+      )
     }
-    diffs_summary <- as.data.frame(diffs_summary)
 
-
-    # Above marks a column with its own letter; below removes that redundant letter
-
-    diffs_summary1 <- sapply(1:ncol(diffs_summary), function(j) {
-      stringr::str_remove_all(diffs_summary[[j]], colnames(diffs_summary)[[j]])
+    names(pairlist_sig) <- apply(label_pairs, 2, function(pair) {
+      paste(pair, collapse = "-")
     })
-    diffs_summary1 <- as.data.frame(diffs_summary1)
+
+
+    # Create a blank summary matrix. Each cell will list the labels of the other
+    # columns that differ significantly from that column for the response row.
+
+    diffs_summary <- matrix(
+      " ",
+      nrow = nrow(dat),
+      ncol = n_xlevs,
+      dimnames = list(rownames(dat), current_labels)
+    )
+
+
+    # Populate the summary directly from each significant pair. For a significant
+    # comparison between columns AA and B, column AA receives "B" and column B
+    # receives "AA". This removes the need for substring detection and for the
+    # later step that removed each column's own letter.
+
+    append_sig_label <- function(existing_value, new_label) {
+      if(is.na(existing_value) || trimws(existing_value) == "") {
+        new_label
+      } else {
+        paste(existing_value, new_label, sep = " ")
+      }
+    }
+
+    for(k in seq_along(pairlist_sig)) {
+      significant_rows <- which(pairlist_sig[[k]] == 1)
+
+      if(length(significant_rows) == 0) {
+        next
+      }
+
+      label_1 <- label_pairs[1, k]
+      label_2 <- label_pairs[2, k]
+      column_1 <- match(label_1, current_labels)
+      column_2 <- match(label_2, current_labels)
+
+      for(i in significant_rows) {
+        diffs_summary[i, column_1] <- append_sig_label(
+          diffs_summary[i, column_1],
+          label_2
+        )
+        diffs_summary[i, column_2] <- append_sig_label(
+          diffs_summary[i, column_2],
+          label_1
+        )
+      }
+    }
+
+    diffs_summary1 <- as.data.frame(
+      diffs_summary,
+      stringsAsFactors = FALSE,
+      check.names = FALSE
+    )
 
 
     # Add rownames to facilitate merging with table of freqs/pcts
@@ -881,83 +932,86 @@ testcols.ctabs <- function(obj,
     # First create output table with n AND pct
 
     temp <- xt_list[[x]] %>%
-      dplyr::mutate(pct = paste0(round(pct*100),"%"),
-                    n = as.character(n)) %>%
-      tidyr::pivot_longer(c(n,pct)) %>%
-      tidyr::pivot_wider(names_from = 2, values_from = value) %>%
-      dplyr::mutate(rwname = paste0(!!sym(yvar), "__", name)) %>%
-      dplyr::select(-c(1,2)) %>% as.data.frame()
+      mutate(pct = paste0(round(pct*100, digits = digits),"%"),
+             n = as.character(round(n))) %>%
+      pivot_longer(c(n,pct)) %>%
+      pivot_wider(names_from = 2, values_from = value) %>%
+      mutate(rwname = paste0(!!sym(yvar), "__", name)) %>%
+      select(-c(1,2)) %>% as.data.frame()
     rownames(temp) <- temp$rwname
-    temp <- temp %>% dplyr::select(-rwname)
+    temp <- temp %>% select(-rwname)
 
 
     # Merge n/pct table with significant differences table
 
-    finaltbl <- dplyr::bind_rows(temp, diffs_summary1) %>%
-      tibble::rownames_to_column("Response") %>%
-      dplyr::mutate(Stat = stringr::str_split_i(Response, "__", 2), .after = Response,
-             Response = stringr::str_split_i(Response, "__", 1))
+    finaltbl <- bind_rows(temp, diffs_summary1) %>%
+      rownames_to_column("Response") %>%
+      mutate(Stat = str_split_i(Response, "__", 2), .after = Response,
+             Response = str_split_i(Response, "__", 1))
     finaltbl$Response <- factor(finaltbl$Response, levels = ylevs)
     finaltbl <- finaltbl %>%
-      dplyr::arrange(Response)
+      arrange(Response)
     finaltbl$Response <- as.character(finaltbl$Response)
     finaltbl <- finaltbl %>%
-      dplyr::group_by(Response) %>%
-      dplyr::mutate(Response = replace(Response, duplicated(Response), " "))
+      group_by(Response) %>%
+      mutate(Response = replace(Response, duplicated(Response), " ")) %>%
+      ungroup()
 
-    out[[x]] <- finaltbl
+    out[[x]] <- finaltbl %>%   # this is the function that replaces NAs with the appropriate form of 0
+      mutate_all(~case_when(is.na(.x) & Stat == "n" ~ "0",
+                            is.na(.x) & Stat == "pct" ~ "0%",
+                            TRUE ~ .x))
     attr(out[[x]], "xvar") <- xvars[[x]]
     attr(out[[x]], "xlevs") <- xlevs
     attr(out[[x]], "siglabs") <- colnames(diffs_summary)
+
   }
 
   # Assemble final output object -----------------------------------------------
 
-  attr(out, "ctabs.test")  <- TRUE
   attr(out, "yvar") <- names(obj[[1]][1])
   attr(out, "ylevs") <- levels(obj[[3]][[1]])
-  attr(out, "siglabs") <- sapply(1:length(out), function(x) attr(out[[x]], "siglabs"))
   names(out) <- xvars
+
+  # Add Total column (has to be done here otherwise naming of list objects gets mixed up)
+  totaltbl <- obj[[2]] %>%
+    mutate(n = as.character(round(n)),
+           pct = paste0(round(pct*100, digits = digits),"%"),
+           sig = " ") %>%
+    select(-Total) %>%
+    pivot_longer(n:sig, names_to = "Stat", values_to = "Total") %>%
+    rename("Response" = 1) %>%
+    group_by(Response) %>%
+    mutate(Response = as.character(Response)) %>%
+    mutate(Response = replace(Response, duplicated(Response), " ")) %>%
+    ungroup()
+  attr(totaltbl, "xvar") <- "Total"
+  attr(totaltbl, "xlevs") <- "Total"
+  attr(totaltbl, "siglabs") <- "A"
+
+  out <- c(list("Total" = totaltbl), out)
+
+  attr(out, "class")  <- c("ctabstest", "list")
   return(out)
 }
 
 
 
 
-#' Print method for ctabs.test objects
+
+
+
+
+
+
+
+
+#' ctabs_format
 #'
-#' @description Prints dataframes within ctabs.test list object and adds column
-#' letters marking significantly different column proportions.
-#'
-#' @param x An object of class "ctabs.test" produced by `ctabs()`
+#' @param obj An object of class "ctabs.test" created with the \code{testcols} function
+#' @param fix.colnames A boolean that denotes whether columns should be repaired
+#' @param kablize Boolean indicating whether send output to kable()
 #' @param ... Other arguments (not currently implemented)
-#'
-#' @export
-#'
-print.ctabs.test <- function(x,
-                             ...) {
-
-  x <- lapply(1:length(x), function(i) {
-    mycols <- c("", "", paste0("(",LETTERS[1:(ncol(x[[i]])-2)],")"))
-    names(mycols) <- colnames(x[[i]])
-    x[[i]] <- bind_rows(mycols, x[[i]])
-  })
-  for(i in 1:length(x)) print(as.data.frame(x[[i]]))
-}
-
-
-
-
-
-
-
-
-#' format_ctabs
-#'
-#' @param obj An object of class "ctabs.test" created with the \code{testcols} function.
-#' @param ... Other arguments (not currently implemented)
-#'
-#' @return A tibble
 #'
 #' @importFrom dplyr bind_cols select
 #' @importFrom magrittr %>%
@@ -969,32 +1023,59 @@ print.ctabs.test <- function(x,
 #'
 #' @export
 #'
-ctabs_format <- function(obj, ...) {
+ctabs_format <- function(obj, fix.colnames = TRUE, kablize = FALSE, ...) {
 
+  orgcolnames <- c("Response", "Stat", purrr::as_vector(sapply(1:length(obj), function(x) {(attr(obj[[x]], "xlevs"))})))
   labelcols <- obj[[1]] %>% select(c(1,2))
-  siglabs <- sapply(1:length(obj), function(x) attr(obj[[x]], "siglabs"))
+  siglabs <- paste0("(", sapply(1:length(obj), function(x) attr(obj[[x]], "siglabs")) %>% unlist(), ")")
   xvars <- sapply(1:length(obj), function(x) attr(obj[[x]], "xvar"))
   xlevs <- sapply(1:length(obj), function(x) attr(obj[[x]], "xlevs"))
 
+  # no longer works because of changes in tidyverse
+  #out <- bind_cols(obj, .name_repair = "unique_quiet") %>%
+  #  select(-c(starts_with("Response..."), starts_with("Stat...")))
+  out <- do.call(cbind, obj) %>%
+    select(-c(ends_with(".Response"), ends_with(".Stat")))
+  out <- bind_cols(labelcols, out)
 
-  out <- dplyr::bind_cols(obj) %>%
-    dplyr::select(-c(tidyselect::starts_with("Response..."), tidyselect::starts_with("Stat...")))
+  #this is a simplified version that can be used for print method
+  #out <- bind_cols(obj[[1]] %>% select(c(1,2)),
+  #                 do.call(cbind, obj) %>% select(-c(ends_with(".Response"), ends_with(".Stat"))))
 
-  out <- dplyr::bind_cols(labelcols, out)
-
-  temp <- c(unlist(siglabs))
-  temp <- c("", "", paste0("(",temp,")"))
-  names(temp) <- colnames(out)
+  temp <- c(" ", " ", unlist(siglabs))
+  names(temp) <- c(colnames(out))
   out <- rbind(temp, out)
 
-  attr(out, "ctabs.fmt") <- TRUE
-  attr(out, "yvar") <- attr(obj, "yvar")
-  attr(out, "ylevs") <- attr(obj, "ylevs")
-  attr(out, "xvars") <- xvars
-  attr(out, "xlevs") <- xlevs
-  attr(out, "siglabs") <- siglabs
+  if(isTRUE(fix.colnames)) {
+    colnames(out) <- orgcolnames
+  } else {
+
+  }
+
+  colnameswithsig <- paste0(colnames(out), "\n", out[1,])
+  out <- out[-1,]
+  colnames(out) <- colnameswithsig
+
+  #attr(out, "yvar") <- attr(obj, "yvar")
+  #attr(out, "ylevs") <- attr(obj, "ylevs")
+  #attr(out, "xvars") <- xvars
+  #attr(out, "xlevs") <- xlevs
+  #attr(out, "siglabs") <- siglabs
+  #attr(out, "class") <- c("list", "ctabs.fmt")
+
+  if(isTRUE(kablize)) {
+
+    out <- kable(out, col.names = gsub("\n", "<br>", names(out)), escape = FALSE, format = "html") # %>% kable_styling()
+
+    } else {
+
+      print('To finish output process, use knitr::kable(). For example:')
+      print('kable(out, col.names = gsub("\n", "<br>", names(out)), escape = FALSE, format = "html") ')
+
+    }
 
   return(out)
+
 }
 
 
@@ -1077,22 +1158,22 @@ ctabs_kbl.data.frame <- function(obj, xvarnames = NULL, ...)  {
   # main function starts here
   obj <- dplyr::slice(obj, -1)   # b/c input table for this function has column letters for sigdiffs
   out <- kableExtra::kbl(obj,
-                         col.names = c("", "", siglabsb),
+                         col.names = c(" ", " ", siglabsb),
                          align = c("l", "c", rep("r", ncol(obj)-2))) %>%
     kableExtra::kable_classic() %>%
     # kableExtra::row_spec(rep(3, length(attr(obj, "ylevs"))), extra_css = "border-bottom: 1px solid") %>%
     kableExtra::column_spec(c(2,2+cumsum(lengths(xlevs))), border_right = TRUE) %>%
     kableExtra::row_spec(0, align = "c") %>%
-    kableExtra::add_header_above(data.frame(names = c("", "", unlist(xlevs)),
+    kableExtra::add_header_above(data.frame(names = c(" ", " ", unlist(xlevs)),
                                             colspan = rep(1, ncol(obj)))) %>%
-    kableExtra::add_header_above(data.frame(names = c("", xvars),
+    kableExtra::add_header_above(data.frame(names = c(" ", xvars),
                                             colspan = c(2, lengths(xlevs))))
 
-  # assemble output
-  # attr(out, "ctabs.kbl") <- TRUE
-  attr(out, "siglabs") <- attr(obj, "siglabs")
-  attr(out, "xvars") <- attr(obj, "xvars")
-  attr(out, "xlevs") <- xlevs
+  ### # assemble output
+  ### # attr(out, "ctabs.kbl") <- TRUE
+  ### attr(out, "siglabs") <- attr(obj, "siglabs")
+  ### attr(out, "xvars") <- attr(obj, "xvars")
+  ### attr(out, "xlevs") <- xlevs
   return(out)
 }
 
@@ -1142,7 +1223,7 @@ ctabs_kbl.list <- function(obj, xvarnames = NULL, ...)  {
   out <- dplyr::bind_cols(labelcols, out)
 
   temp <- c(" ", " ", unlist(siglabs))
-  names(temp) <- colnames(out)
+  ### names(temp) <- colnames(out)
   out <- rbind(temp, out)
 
 
@@ -1165,24 +1246,24 @@ ctabs_kbl.list <- function(obj, xvarnames = NULL, ...)  {
   # main function starts here
   out <- dplyr::slice(out, -1)   # b/c input table for this function has column letters for sigdiffs
   out2 <- kableExtra::kbl(out,
-                         col.names = c("", "", siglabsb),
+                         col.names = c(" ", " ", siglabsb),
                          align = c("l", "c", rep("r", ncol(out)-2))) %>%
     kableExtra::kable_classic() %>%
     # kableExtra::row_spec(rep(3, length(attr(obj, "ylevs"))), extra_css = "border-bottom: 1px solid") %>%
     kableExtra::column_spec(c(2,2+cumsum(lengths(xlevs))), border_right = TRUE) %>%
     kableExtra::row_spec(0, align = "c") %>%
-    kableExtra::add_header_above(data.frame(names = c("", "", unlist(xlevs)),
+    kableExtra::add_header_above(data.frame(names = c(" ", " ", unlist(xlevs)),
                                             colspan = rep(1, ncol(out)))) %>%
-    kableExtra::add_header_above(data.frame(names = c("", xvars),
+    kableExtra::add_header_above(data.frame(names = c(" ", xvars),
                                             colspan = c(2, lengths(xlevs))))
 
-  # assemble output
-  # attr(out, "ctabs.kbl") <- TRUE
-  attr(out2, "yvar") <- attr(obj, "yvar")
-  attr(out2, "ylevs") <- attr(obj, "ylevs")
-  attr(out2, "xvars") <- xvars
-  attr(out2, "xlevs") <- xlevs
-  attr(out2, "siglabs") <- siglabs
+  ### # assemble output
+  ### # attr(out, "ctabs.kbl") <- TRUE
+  ### attr(out2, "yvar") <- attr(obj, "yvar")
+  ### attr(out2, "ylevs") <- attr(obj, "ylevs")
+  ### attr(out2, "xvars") <- xvars
+  ### attr(out2, "xlevs") <- xlevs
+  ### attr(out2, "siglabs") <- siglabs
   return(out2)
 }
 
@@ -1241,31 +1322,51 @@ testcols_ <- function(obj,
 
 
 
+
+
+
 #' testcols_.ctabs
+#'
+#' @description This is (mainly) a wrapper around \code{rstatix::row_wise_prop_test}.
+#' It takes a \code{ctabs} list of crosstabs, tests for all pairwise differences
+#' and outputs a list of data frames that merge the frequencies/percentages with
+#' significantly different column proportions being marked with letters.
 #'
 #' @param obj An object of class "ctabs" created with the `ctabs()` function
 #' @param adj.p Boolean indicating whether to adjust for multiple comparisons
 #' @param siglevel Numeric indicating significance level to use (default .05)
+#' @param digits = Numeric indicating precision of percentages (default 0)z
 #' @param ... Other arguments (not currently implemented)
 #'
-#' @importFrom dplyr arrange bind_cols bind_rows filter group_by mutate rename relocate select summarise tibble
+#' @importFrom dplyr arrange bind_cols bind_rows filter group_by mutate rename relocate select summarise
 #' @importFrom magrittr %>%
 #' @importFrom rlang sym
 #' @importFrom rstatix row_wise_prop_test
 #' @importFrom sjlabelled get_label get_labels
 #' @importFrom stats as.formula
 #' @importFrom srvyr as_survey
+#' @importFrom stringr str_detect str_remove_all str_split_i
 #' @importFrom survey svydesign svymean svyquantile svytable
-#' @importFrom tibble as_tibble
+#' @importFrom tibble tibble rownames_to_column as_tibble
 #' @importFrom tidyr pivot_longer pivot_wider
 #' @importFrom utils combn relist
+#'
+#' @return A list of class \code{ctabs.test} with one dataframe per crosstab of
+#' the respective column variable against the row variable. Each crosstab has
+#' frequencies, column proportions, and letters indicating significant differences
+#' of proportions between pairs of columns.
+#'
+#' @author John Santos
 #'
 #' @export
 #'
 testcols_.ctabs <- function(obj,
-                            adj.p = TRUE,
+                            adj.p = FALSE,
                             siglevel = .05,
+                            digits = 0,
                             ...) {
+
+  # Setup ----------------------------------------------------------------------
 
   if(isTRUE(adj.p)) {
     pval <- "p.adj"
@@ -1275,20 +1376,33 @@ testcols_.ctabs <- function(obj,
 
   xvars <- names(obj[3:length(obj)])
   yvar <- names(obj[[1]][1])
+  ylevs <- levels(obj[[3]][[1]])
 
   xt_list <- obj[3:length(obj)]
   names(xt_list) <- xvars
 
+
+  # Build list of pairwise column tests ----------------------------------------
+
   out <- NULL
-  details <- NULL
+  testdfs <- NULL
+  finaltbls <- NULL
+
   for(x in 1:length(xt_list)) {
+
+
+    # Create data frame for one bivariate crosstab
 
     dat <- xt_list[[x]] %>%
       dplyr::select(-pct) %>%
       tidyr::pivot_wider(names_from = 2, values_from = n) %>%
       as.data.frame()
     rownames(dat) <- dat[[1]]
-    dat <- dat %>% dplyr::select(-1)
+    #dat <- dat %>% dplyr::select(-1)    # not replacing NAs with 0s caused failure when a variable has NAs
+    dat <- dat %>% dplyr::select(-1) %>% replace(is.na(.), 0)
+
+
+    # Create list of pairwise comparisons
 
     pairlist <- combn(names(dat), 2, function(i) {
       d <- dat[i]
@@ -1300,41 +1414,246 @@ testcols_.ctabs <- function(obj,
     names(pairlist) <- sapply(1:length(pairlist), function(i) {
       paste(colnames(pairlist[[i]][1]),"-",colnames(pairlist[[i]][2]))
     })
+
+
+    # Test differences
+
     pairlist_tests <- lapply(1:length(pairlist), function(i) {
       rstatix::row_wise_prop_test(pairlist[[i]], correct = TRUE, detailed = TRUE)
     })
-    # names(pairlist_tests) <- names(pairlist)
+
     pairlist_pvals <- lapply(1:length(pairlist), function(i) {
       pairlist_tests[[i]][[pval]]
     })
-    # names(pairlist_pvals) <- names(pairlist)
+
     pairlist_sig <- NULL
     for(i in 1:length(pairlist_pvals)) {
-      pairlist_sig[[i]] <- ifelse(pairlist_pvals[[i]] < siglevel, "*", "")
+      pairlist_sig[[i]] <- ifelse(pairlist_pvals[[i]] < siglevel, 1, 0)
     }
     names(pairlist_sig) <- names(pairlist)
+
+    # # Old output function
+    # sigdiffs <- do.call("cbind", pairlist_sig)
+    # rownames(sigdiffs) <- rownames(dat)
+    # out[[x]] <- as.data.frame(sigdiffs)
+
+
+    ## Assemble single output table --------------------------------------------
+
+    xlevs <- levels(xt_list[[x]][[2]])
+
+
+    # Create column letter scheme
+
+    combs <- combn(LETTERS[1:length(xlevs)], 2) %>%
+      as.data.frame()
+
+    pairnames <- sapply(1:ncol(combs), function(i) {
+      paste0((combs[[i]][1]),(combs[[i]][2]))
+    })
+    names(pairlist_sig) <- pairnames
+
+
+    # Identify significant differences and collapse to list
+
+    pairlist_sig <- lapply(1:length(pairlist_sig), function(k) {
+      sapply(1:length(pairlist_sig[[k]]), function(j) {
+        ifelse(pairlist_sig[[k]][[j]] == 1,
+               pairlist_sig[[k]][[j]] <- names(pairlist_sig)[[k]],
+               " ")
+      })
+    })
+    names(pairlist_sig) <- names(pairlist)
+
     sigdiffs <- do.call("cbind", pairlist_sig)
     rownames(sigdiffs) <- rownames(dat)
 
-    out[[x]] <- as.data.frame(sigdiffs)
-    details[[x]] <- pairlist_tests
+
+    # Create list of significant differences; will be used to populate summary table later
+
+    siglist <- lapply(1:nrow(dat), function(i) {
+      as.list(sigdiffs[i,])
+    })
+    names(siglist) <-  rownames(dat)
+
+
+    # Create blank summary table
+
+    diffs_summary <- dat
+    rownames(diffs_summary) <- rownames(dat)
+    colnames(diffs_summary) <- LETTERS[1:length(xlevs)]
+    diffs_summary <- apply(diffs_summary, c(1,2), function(x) x <- " ")
+
+
+    # Loop to mark all pairs of significant differences
+
+    i <- 1
+    j <- 1
+    k <- 1
+    for(i in 1:nrow(diffs_summary)) {
+      while(j <= ncol(diffs_summary)) {
+        while(k <= length(siglist[[i]])) {
+          ifelse(str_detect(siglist[[i]][[k]], colnames(diffs_summary)[[j]]),
+                 diffs_summary[i,j] <- paste0(diffs_summary[i,j], siglist[[i]][[k]]),
+                 " ")
+          k <- k + 1
+        }
+        k <- i
+        j <- j + 1
+      }
+      j <- 1
+      i <- i + 1
+    }
+    diffs_summary <- as.data.frame(diffs_summary)
+
+
+    # Above marks a column with its own letter; below removes that redundant letter
+
+    diffs_summary1 <- sapply(1:ncol(diffs_summary), function(j) {
+      str_remove_all(diffs_summary[[j]], colnames(diffs_summary)[[j]])
+    })
+    diffs_summary1 <- as.data.frame(diffs_summary1)
+
+
+    # Add rownames to facilitate merging with table of freqs/pcts
+    rownames(diffs_summary1) <- sapply(1:nrow(dat), function(i) {
+      paste0(rownames(dat)[[i]], "__sig")
+    })
+    colnames(diffs_summary1) <- xlevs
+
+
+    ## Simple output
+    #dat_pct <- as.matrix(dat) %>%
+    #  prop.table(margin = 2) %>%
+    #  round(., digits = 4)
+    #dat_pct <- apply(dat_pct, c(1,2), function(x) paste0(round(x*100),"%")) %>%
+    #  as.data.frame()
+    #
+    #finaltbl <- rbind(dat_pct, diffs_summary1)
+    #finaltbl <- finaltbl[order(row.names(finaltbl)), ]
+
+
+    # First create output table with n AND pct
+
+    temp <- xt_list[[x]] %>%
+      mutate(pct = paste0(round(pct*100, digits = digits),"%"),
+             n = as.character(round(n))) %>%
+      pivot_longer(c(n,pct)) %>%
+      pivot_wider(names_from = 2, values_from = value) %>%
+      mutate(rwname = paste0(!!sym(yvar), "__", name)) %>%
+      select(-c(1,2)) %>% as.data.frame()
+    rownames(temp) <- temp$rwname
+    temp <- temp %>% select(-rwname)
+
+
+    # Merge n/pct table with significant differences table
+
+    finaltbl <- bind_rows(temp, diffs_summary1) %>%
+      rownames_to_column("Response") %>%
+      mutate(Stat = str_split_i(Response, "__", 2), .after = Response,
+             Response = str_split_i(Response, "__", 1))
+    finaltbl$Response <- factor(finaltbl$Response, levels = ylevs)
+    finaltbl <- finaltbl %>%
+      arrange(Response)
+    finaltbl$Response <- as.character(finaltbl$Response)
+    finaltbl <- finaltbl %>%
+      group_by(Response) %>%
+      mutate(Response = replace(Response, duplicated(Response), " ")) %>%
+      ungroup()
+
+    out[[x]] <- finaltbl
+    attr(out[[x]], "xvar") <- xvars[[x]]
+    attr(out[[x]], "xlevs") <- xlevs
+    attr(out[[x]], "siglabs") <- colnames(diffs_summary)
+
   }
 
-  names(out) <- xvars
-  names(details) <- xvars
+  # Assemble final output object -----------------------------------------------
 
-  output <- list(
-    Summary = out,
-    Details = details
-  )
-  # attr(output, "class")  <- "ctabs.test_"
-  return(output)
+  attr(out, "yvar") <- names(obj[[1]][1])
+  attr(out, "ylevs") <- levels(obj[[3]][[1]])
+  names(out) <- xvars
+
+  # Add Total column (has to be done here otherwise naming of list objects gets mixed up)
+  totaltbl <- obj[[2]] %>%
+    mutate(n = as.character(round(n)),
+           pct = paste0(round(pct*100, digits = digits),"%"),
+           sig = " ") %>%
+    select(-Total) %>%
+    pivot_longer(n:sig, names_to = "Stat", values_to = "Total") %>%
+    rename("Response" = 1) %>%
+    group_by(Response) %>%
+    mutate(Response = as.character(Response)) %>%
+    mutate(Response = replace(Response, duplicated(Response), " ")) %>%
+    ungroup()
+  attr(totaltbl, "xvar") <- "Total"
+  attr(totaltbl, "xlevs") <- "Total"
+  attr(totaltbl, "siglabs") <- " "
+
+  out <- c(list("Total" = totaltbl), out)
+
+  attr(out, "class")  <- c("list", "ctabstest")
+  return(out)
 }
 
 
 
 
-#' Print method for ctabs.test_ objects
+#' Print method for ctabs.test objects
+#'
+#' @description Prints dataframes within ctabs.test list object and adds column
+#' letters marking significantly different column proportions.
+#'
+#' @param x An object of class "ctabs.test" produced by `ctabs()`
+#' @param ... Other arguments (not currently implemented)
+#'
+#' @export
+#'
+print.ctabstest <- function(x,
+                            ...) {
+
+  nxlevs <- length(sapply(1:length(x), function(i) attr(x[[i]], "xlevs")) %>% unlist())
+  sig_label_pool <- paste0("(",
+                           c(LETTERS, as.vector(t(outer(LETTERS, LETTERS, paste0)))),
+                           ")")[1:nxlevs]
+
+  #x <- lapply(1:length(x), function(i) {
+  #  mycols <- c(" ", " ", paste0("(",LETTERS[1:(ncol(x[[i]])-2)],")"))
+  #
+  #  names(mycols) <- colnames(x[[i]])
+  #  x[[i]] <- bind_rows(mycols, x[[i]])
+  #})
+  mycols <- c(" ", " ", sig_label_pool)
+  tbls <- do.call("cbind", x) %>% select(-c(ends_with(".Response"), ends_with(".Stat")))
+  labelcols <- x[[1]] %>% select(c(1,2))
+  #out <- bind_cols(x, .name_repair = "unique_quiet") %>% select(-c(starts_with("Response..."), starts_with("Stat...")))
+  out <- bind_cols(x[[1]] %>% select(c(1,2)),
+                   do.call("cbind", x) %>% select(-c(ends_with(".Response"), ends_with(".Stat")))
+  )
+
+  out <- do.call(
+    "rbind",
+    list(
+      c(" ", " ", sig_label_pool),
+      bind_cols(x[[1]] %>% select(c(1,2)),
+                do.call("cbind", x) %>% select(-c(ends_with(".Response"), ends_with(".Stat")))
+      )
+    )
+  )
+  #for(i in 1:length(x)) print(as.data.frame(x[[i]]))
+
+  return(out)
+}
+
+
+
+
+
+
+
+
+
+#' Print method for ctabstest_ objects
 #'
 #' @description Prints only the summary tables from a ctabs.test_ list object.
 #'
@@ -1343,7 +1662,7 @@ testcols_.ctabs <- function(obj,
 #'
 #' @export
 #'
-print.ctabs.test_ <- function(x,
+print.ctabstest_ <- function(x,
                               ...) {
   print(x[[1]])
 }

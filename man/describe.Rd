@@ -2,7 +2,7 @@
 % Please edit documentation in R/jbsMisc_functions.R
 \name{describe}
 \alias{describe}
-\title{Detailed summary statistics}
+\title{Detailed summary statistics of a vector}
 \usage{
 describe(x, digits = 4, convertFactors = FALSE, ...)
 }
@@ -16,5 +16,5 @@ describe(x, digits = 4, convertFactors = FALSE, ...)
 \item{...}{Other arguments (not currently implemented)}
 }
 \description{
-Detailed summary statistics
+Detailed summary statistics of a vector
 }

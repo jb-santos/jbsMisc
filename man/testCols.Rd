@@ -4,14 +4,18 @@
 \alias{testcols}
 \title{testcols}
 \usage{
-testcols(obj, adj.p = FALSE, siglevel = 0.05, ...)
+testcols(obj, adj.p = FALSE, siglevel = 0.05, digits = 0, ...)
+
+testcols(obj, adj.p = FALSE, siglevel = 0.05, digits = 0, ...)
 }
 \arguments{
 \item{obj}{An object of class "ctabs" created with the \code{ctabs()} function}
 
-\item{adj.p}{Boolean indicating whether to apply Holm correction to p-values (default TRUE)}
+\item{adj.p}{Boolean indicating whether to adjust for multiple comparisons}
 
 \item{siglevel}{Numeric indicating significance level to use (default .05)}
+
+\item{digits}{= Numeric indicating precision of percentages (default 0)z}
 
 \item{...}{Other arguments (not currently implemented)}
 }
@@ -20,9 +24,17 @@ A list of class \code{ctabs.test} with one dataframe per crosstab of
 the respective column variable against the row variable. Each crosstab has
 frequencies, column proportions, and letters indicating significant differences
 of proportions between pairs of columns.
+
+A list of class \code{ctabs.test} with one dataframe per crosstab of
+the respective column variable against the row variable. Each crosstab has
+frequencies, column proportions, and letters indicating significant differences
+of proportions between pairs of columns.
 }
 \description{
-testcols
+This is (mainly) a wrapper around \code{rstatix::row_wise_prop_test}.
+It takes a \code{ctabs} list of crosstabs, tests for all pairwise differences
+and outputs a list of data frames that merge the frequencies/percentages with
+significantly different column proportions being marked with letters.
 }
 \examples{
 library(survey)

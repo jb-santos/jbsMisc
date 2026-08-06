@@ -2,7 +2,7 @@
 % Please edit documentation in R/jbsMisc_functions.R
 \name{testProps}
 \alias{testProps}
-\title{Title}
+\title{Significance of difference test for two column proportions}
 \usage{
 testProps(a.prop, a.n, b.prop, b.n, ...)
 }
@@ -21,5 +21,5 @@ testProps(a.prop, a.n, b.prop, b.n, ...)
 A data frame
 }
 \description{
-Title
+Significance of difference test for two column proportions
 }

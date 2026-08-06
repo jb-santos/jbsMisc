@@ -6,18 +6,27 @@ S3method(ctabs,data.frame)
 S3method(ctabs,survey.design)
 S3method(ctabs_kbl,data.frame)
 S3method(ctabs_kbl,list)
+S3method(plot,crossTab)
 S3method(plot,ctabs)
 S3method(print,ctabs)
-S3method(print,ctabs.test)
-S3method(print,ctabs.test_)
-S3method(testcols,ctabs)
+S3method(print,ctabstest)
+S3method(print,ctabstest_)
 S3method(testcols_,ctabs)
+export(crossTab)
 export(ctab)
 export(ctabs)
 export(ctabs_format)
 export(ctabs_kbl)
-export(describe)
 export(ggfontsize)
+export(make0to10)
+export(makeAgree)
+export(makeAgreeNets)
+export(makeApprove)
+export(makeApproveNets)
+export(makeConfident)
+export(makeConfidentNets)
+export(makeSupport)
+export(makeSupportNets)
 export(moeProp)
 export(range01)
 export(seProp)
@@ -25,56 +34,88 @@ export(testProps)
 export(testcols)
 export(testcols_)
 export(unWeight)
-importFrom(dplyr,arrange)
-importFrom(dplyr,bind_cols)
-importFrom(dplyr,bind_rows)
-importFrom(dplyr,filter)
-importFrom(dplyr,group_by)
-importFrom(dplyr,mutate)
-importFrom(dplyr,relocate)
-importFrom(dplyr,rename)
-importFrom(dplyr,select)
-importFrom(dplyr,slice)
-importFrom(dplyr,summarise)
-importFrom(dplyr,tibble)
-importFrom(ggplot2,aes)
-importFrom(ggplot2,element_text)
-importFrom(ggplot2,geom_bar)
-importFrom(ggplot2,geom_text)
-importFrom(ggplot2,ggplot)
-importFrom(ggplot2,labs)
-importFrom(ggplot2,margin)
-importFrom(ggplot2,position_dodge)
-importFrom(ggplot2,position_stack)
-importFrom(ggplot2,scale_y_continuous)
-importFrom(ggplot2,theme)
-importFrom(kableExtra,add_header_above)
-importFrom(kableExtra,column_spec)
-importFrom(kableExtra,kable_classic)
-importFrom(kableExtra,kbl)
-importFrom(kableExtra,row_spec)
+importFrom(car,recode)
+importFrom(dplyr,
+  arrange,
+  bind_cols,
+  bind_rows,
+  filter,
+  group_by,
+  mutate,
+  relocate,
+  rename,
+  select,
+  slice,
+  summarise,
+  tibble,
+  ungroup
+)
+importFrom(ggplot2,
+  aes,
+  element_text,
+  facet_wrap,
+  geom_bar,
+  geom_text,
+  ggplot,
+  labs,
+  margin,
+  position_dodge,
+  position_stack,
+  scale_y_continuous,
+  theme
+)
+importFrom(kableExtra,
+  add_header_above,
+  column_spec,
+  kable_classic,
+  kbl,
+  row_spec
+)
 importFrom(magrittr,"%>%")
 importFrom(rlang,sym)
 importFrom(rstatix,row_wise_prop_test)
 importFrom(scales,percent)
-importFrom(sjlabelled,get_label)
-importFrom(sjlabelled,get_labels)
-importFrom(srvyr,as_survey)
-importFrom(stats,as.formula)
-importFrom(stats,median)
-importFrom(stats,sd)
-importFrom(stats,var)
-importFrom(stringr,str_detect)
-importFrom(stringr,str_remove_all)
-importFrom(stringr,str_split_i)
-importFrom(survey,svydesign)
-importFrom(survey,svymean)
-importFrom(survey,svyquantile)
-importFrom(survey,svytable)
-importFrom(tibble,as_tibble)
-importFrom(tibble,rownames_to_column)
-importFrom(tidyr,pivot_longer)
-importFrom(tidyr,pivot_wider)
+importFrom(sjlabelled,
+  get_label,
+  get_labels
+)
+importFrom(srvyr,
+  as_survey,
+  as_survey_design,
+  survey_total
+)
+importFrom(stats,
+  as.formula,
+  median,
+  na.omit,
+  pnorm,
+  sd,
+  var
+)
+importFrom(stringr,
+  str_detect,
+  str_remove_all,
+  str_split_i
+)
+importFrom(survey,
+  svydesign,
+  svymean,
+  svyquantile,
+  svytable
+)
+importFrom(tibble,
+  add_column,
+  add_row,
+  as_tibble,
+  rownames_to_column,
+  tibble
+)
+importFrom(tidyr,
+  pivot_longer,
+  pivot_wider
+)
 importFrom(tidyselect,starts_with)
-importFrom(utils,combn)
-importFrom(utils,relist)
+importFrom(utils,
+  combn,
+  relist
+)

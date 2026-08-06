@@ -1,26 +1,26 @@
 # color palettes
 
 pal_jbor4 <- c(
-  "#E04541", # dark red
-           "#F5B3B4", # light red
-           "#A5E5ED", # light blue
-           "#33C7DB" # dark blue
+  "#0C9EBD", # dark blue
+  "#A4E4EC", # light blue
+  "#DF4540", # dark red
+  "#B3BBBA"  # grey
 )
 
 pal_jbor5 <- c(
-  "#E04541", # dark red
-           "#F5B3B4", # light red
-           "#A5E5ED", # light blue
-           "#0C9EBD", # dark blue
-           "#c1c1c1"  # grey
+  "#0C9EBD", # dark blue
+  "#A4E4EC", # light blue
+  "#F4B2B3", # light red
+  "#DF4540", # dark red
+  "#B3BBBA"  # grey
 )
 
 pal_jbor5m <- c(
-  "#E04541", # dark red
-           "#F5B3B4", # light red
-           "#c1c1c1", # grey
-           "#A5E5ED", # light blue
-           "#0C9EBD" # dark blue
+  "#0C9EBD", # dark blue
+  "#A4E4EC", # light blue
+  "#B3BBBA", # grey
+  "#F4B2B3", # light red
+  "#DF4540" # dark red
 )
 
 pal_abvotegrp <- c(

@@ -2,22 +2,24 @@
 % Please edit documentation in R/ctab.R
 \name{ctabs_format}
 \alias{ctabs_format}
-\title{format_ctabs}
+\title{ctabs_format}
 \usage{
-ctabs_format(obj, ...)
+ctabs_format(obj, fix.colnames = TRUE, kablize = FALSE, ...)
 }
 \arguments{
-\item{obj}{An object of class "ctabs.test" created with the \code{testcols} function.}
+\item{obj}{An object of class "ctabs.test" created with the \code{testcols} function}
+
+\item{fix.colnames}{A boolean that denotes whether columns should be repaired}
+
+\item{kablize}{Boolean indicating whether send output to kable()}
 
 \item{...}{Other arguments (not currently implemented)}
 }
 \value{
 A tibble
-
-A tibble
 }
 \description{
-format_ctabs
+ctabs_format
 }
 \author{
 John Santos
