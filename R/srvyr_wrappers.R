@@ -65,7 +65,7 @@ crossTab <- function(data, yvar, xvar, controlvar = NULL, digits = 0, ...) {
   attr(out, "yvar") <- yvar
   if(!is.null(controlvar)) { attr(out, "controlvar") <- controlvar }
 
-  #attr(out, "class") <- c(attr(out, "class"), "crossTab")
+  attr(out, "class") <- c("crossTab", attr(out, "class"))
 
   return(out)
 
@@ -108,49 +108,89 @@ crossTab <- function(data, yvar, xvar, controlvar = NULL, digits = 0, ...) {
 #'
 #' @param dat Data frame of class `crossTab`
 #' @param digits Numeric indicating how many decimal places to display on labels
+#' @param horizontal Boolean indicating bars should be horiztonal (default = FALSE)
+#' @param pctcutoff Numeric (in decimal) below which % labels should be omitted
 #' @param ... Other arguments passed through the function (not currently implemented)
 #'
-#' @importFrom ggplot2 ggplot aes geom_bar geom_text position_stack facet_wrap
+#' @importFrom ggplot2 ggplot aes geom_bar geom_text position_stack facet_wrap scale_y_continuous labs theme theme_classic guides guide_legend
+#' @importFrom forcats fct_rev
+#' @importFrom scales percent
 #'
 #' @returns A `ggplot` object
 #'
 #' @export
 #'
-plot.crossTab <- function(dat, digits = 0, ...) {
+plot.crossTab <- function(dat, horizontal = FALSE, pctcutoff = .05, digits = 0, ...) {
 
-  if(ncol(dat) == 2) {
+  if(ncol(dat) == 6) {
 
-    ggplot2::ggplot(dat) +
-      ggplot2::aes(x = dat[[1]], y = pct, fill = dat[[2]],
-          label = paste0(round(pct*100, digits = digits),"%")) +
-      ggplot2::geom_bar(stat = "identity") +
-      ggplot2::geom_text(position = ggplot2::position_stack(.5))
-
-    #return(p)
-
-  }
-
-  if(ncol(dat) == 3) {
-
-    ggplot2::ggplot(dat) +
-      ggplot2::aes(x = dat[[2]], y = pct, fill = dat[[3]],
-          label = paste0(round(pct*100, digits = digits),"%")) +
-      ggplot2::geom_bar(stat = "identity") +
-      ggplot2::facet_wrap(~dat[[1]]) +
-      ggplot2::geom_text(position = ggplot2::position_stack(.5))
-
-    #return(p)
+    p <- ggplot2::ggplot(dat) +
+      ggplot2::aes(y = forcats::fct_rev(!!sym(attr(dat, "xvar"))), x = pct, fill = forcats::fct_rev(!!sym(attr(dat, "yvar"))),
+                   label = ifelse(pct > pctcutoff, paste0(round(pct*100, digits = digits),"%"), "")) +
+      ggplot2::geom_bar(stat = "identity", alpha = .8) +
+      ggplot2::geom_text(position = ggplot2::position_stack(.5)) +
+      ggplot2::scale_x_continuous(labels = scales::percent) +
+      ggplot2::theme_classic() +
+      ggplot2::theme(legend.position = "bottom") +
+      ggplot2::guides(fill = ggplot2::guide_legend(reverse = TRUE)) +
+      ggplot2::labs(title = paste0(attr(dat, "yvar"), " by ", attr(dat, "xvar")),
+                    y = NULL, # paste0(attr(dat, "xvar"), "\n"),
+                    x = NULL, # "\nPercent",
+                    fill = NULL, "Response")
 
   }
 
-  #p <- ggplot2::ggplot(dat) +
-  #  aes(x = attr(dat, "xvar"), y = pct, fill = attr(dat, "xvar"),
-  #      label = paste0(round(pct*100, digits = digits),"%")) +
-  #  geom_bar(stat = "identity") +
-  #  geom_text(position = position_stack(.5))
-  #
-  #if(!is.null(controlvar)) { p <- p + facet_wrap(~attr(dat, "controvar")) }
-  #
-  #return(p)
+  if(ncol(dat) == 7) {
+
+    p <- ggplot2::ggplot(dat) +
+      ggplot2::aes(y = forcats::fct_rev(!!sym(attr(dat, "xvar"))), x = pct, fill = forcats::fct_rev(!!sym(attr(dat, "yvar"))),
+                   label = ifelse(pct > pctcutoff, paste0(round(pct*100, digits = digits),"%"), "")) +
+      ggplot2::geom_bar(stat = "identity", alpha = .8) +
+      ggplot2::facet_wrap(reformulate(attr(dat, "controlvar"))) +
+      ggplot2::geom_text(position = ggplot2::position_stack(.5)) +
+      ggplot2::scale_x_continuous(labels = scales::percent) +
+      ggplot2::theme_classic() +
+      ggplot2::theme(legend.position = "bottom") +
+      ggplot2::guides(fill = ggplot2::guide_legend(reverse = TRUE)) +
+      ggplot2::labs(title = paste0(attr(dat, "yvar"), " by ", attr(dat, "xvar"), " and ", attr(dat, "controlvar")),
+                    y = NULL, # paste0(attr(dat, "xvar"), "\n"),
+                    x = NULL, # "\nPercent",
+                    fill = NULL #, "Response")
+                    )
+
+    #vertical orientation
+    #p <- ggplot2::ggplot(dat) +
+    #  ggplot2::aes(x = !!sym(attr(dat, "xvar")), y = pct, fill = forcats::fct_rev(!!sym(attr(dat, "yvar"))),
+    #               label = ifelse(pct > pctcutoff, paste0(round(pct*100, digits = digits),"%"), "")) +
+    #  ggplot2::geom_bar(stat = "identity") +
+    #  ggplot2::facet_wrap(reformulate(attr(dat, "controlvar"))) +
+    #  ggplot2::geom_text(position = ggplot2::position_stack(.5)) +
+    #  ggplot2::scale_y_continuous(labels = scales::percent) +
+    #  ggplot2::theme_classic() +
+    #  ggplot2::theme(legend.position = "bottom") +
+    #  ggplot2::labs(title = paste0(attr(dat, "yvar"), " by ", attr(dat, "xvar"), " and ", attr(dat, "controlvar")),
+    #                x = paste0("\n", attr(dat, "xvar")),
+    #                y = "Percent\n",
+    #                fill = "Response")
+
+  }
+
+  if(isTRUE(horizontal)) {
+
+    p <- p +
+      aes(y = !!sym(attr(dat, "xvar"))) +
+      coord_flip() +
+      ggplot2::guides(fill = ggplot2::guide_legend(reverse = TRUE)) +
+      ggplot2::labs(y = NULL, # paste0("\n", attr(dat, "xvar")),
+                    x = NULL, # "Percent\n",
+                    fill = NULL # "Response"
+                    )
+
+  } else {
+
+  }
+
+
+  return(p)
 
 }

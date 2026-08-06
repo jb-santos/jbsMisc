@@ -50,6 +50,7 @@ importFrom(dplyr,
   tibble,
   ungroup
 )
+importFrom(forcats,fct_rev)
 importFrom(ggplot2,
   aes,
   element_text,
@@ -57,12 +58,15 @@ importFrom(ggplot2,
   geom_bar,
   geom_text,
   ggplot,
+  guide_legend,
+  guides,
   labs,
   margin,
   position_dodge,
   position_stack,
   scale_y_continuous,
-  theme
+  theme,
+  theme_classic
 )
 importFrom(kableExtra,
   add_header_above,
