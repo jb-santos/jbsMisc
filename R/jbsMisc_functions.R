@@ -2,6 +2,63 @@
 
 
 
+#' Cut quantiles
+#'
+#' @param x Vector
+#' @param n Number of quantiles to make
+#'
+#' @returns A vector
+#' @export
+#'
+cutQuants <- function(x, n = 3) {
+  cut(x,
+      breaks = quantile(x, probs = seq(0, 1, by = 1/n)),
+      include.lowest = TRUE)
+}
+
+
+
+
+
+
+#' Generate a code list out of a labelled data frame
+#'
+#' @param labelleddf A labelled data frame (e.g. generated from {haven})
+#' @param ... Other options (not currently implemented)
+#'
+#' @importFrom tibble tibble
+#'
+#' @returns A list that can be exported to Excel openxlsx::write.xlsx(output, file = "output.xlsx")
+#' @export
+#'
+#'
+makeCodeList <- function(labelleddf, ...) {
+
+  out <- lapply(1:ncol(labelleddf), function(i) {
+    tibble::tibble(
+      !!sym(paste0(names(labelleddf)[[i]], "..", "value")) := unname(attributes(labelleddf[[i]])$labels),
+      !!sym(paste0(names(labelleddf)[[i]], "..", "label")) := names(attributes(labelleddf[[i]])$labels),
+    )
+  })
+
+  names(out) <- names(labelleddf)
+
+  return(out)
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #' Recode Likert item with AGREE scale
 #'

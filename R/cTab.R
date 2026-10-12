@@ -1000,7 +1000,19 @@ testcols<- function(obj,
 
 
 
-
+## use this for new ctabs_format function
+#z <- jbsMisc::ctabs(twa_wt, "vote4", "FieldDateLast")
+#z %>% testcols() %>% ctabs_format()
+#z
+#z[[3]] %>% pivot_wider(names_from = FieldDateLast, values_from = c(n, pct))
+#z[[3]] %>%
+#  mutate(n = as.character(round(n)),
+#         pct = paste0(round(pct*100), "%")) %>%
+#  pivot_wider(names_from = FieldDateLast, values_from = c(n, pct)) %>%
+#  pivot_longer(-1, names_sep = "_", names_to = c("stat", "date")) %>%
+#  pivot_wider(names_from = date)
+#z[[3]] %>% select(-pct) %>% pivot_wider(names_from = FieldDateLast, values_from = c(n))
+#z[[3]] %>% select(-n) %>% pivot_wider(names_from = FieldDateLast, values_from = c(pct))
 
 
 
@@ -1069,8 +1081,11 @@ ctabs_format <- function(obj, fix.colnames = TRUE, kablize = FALSE, ...) {
 
     } else {
 
-      print('To finish output process, use knitr::kable(). For example:')
-      print('kable(out, col.names = gsub("\n", "<br>", names(out)), escape = FALSE, format = "html") ')
+      rlang::warn(
+        'To finish output process, use knitr::kable(). For example:\nprint(kable(out, col.names = gsub("\n", "<br>", names(out)), escape = FALSE, format = "html")',
+        .frequence = "once",
+        .frequency_id = "my_unique_warning_id"
+      )
 
     }
 
@@ -1319,6 +1334,7 @@ testcols_ <- function(obj,
                      adj.p = FALSE,
                      siglevel = .05,
                      ...)  {UseMethod("testcols_")}
+
 
 
 
